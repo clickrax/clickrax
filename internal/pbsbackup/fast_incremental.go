@@ -102,7 +102,7 @@ func (fi *fastIncremental) cacheFileCount() int {
 	return len(fi.prev.Files)
 }
 
-func (fi *fastIncremental) recordFile(path string, info os.FileInfo, spans []fileChunkSpan) {
+func (fi *fastIncremental) recordFile(path string, info os.FileInfo, spans []fileChunkSpan, pxarLen int64) {
 	if fi == nil || !fi.cacheEnabled || len(spans) == 0 {
 		return
 	}
@@ -113,9 +113,15 @@ func (fi *fastIncremental) recordFile(path string, info os.FileInfo, spans []fil
 	if _, exists := fi.live.files[key]; exists {
 		return
 	}
+	aclHash := ""
+	if e, err := filemeta.CaptureFile(path); err == nil {
+		aclHash = winattr.ACLHash(e)
+	}
 	fi.live.put(key, PBSFileRecord{
 		Size:       info.Size(),
+		PxarLen:    pxarLen,
 		Mtime:      info.ModTime().UnixNano(),
+		ACLHash:    aclHash,
 		ChunkSpans: spans,
 	})
 }

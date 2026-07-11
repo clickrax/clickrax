@@ -14,9 +14,10 @@ import (
 const pbsFileIndexVersion = 1
 const pbsFileIndexName = "pbs_files.json"
 
-// PBSFileRecord holds per-file metadata and a blob offset for fast incremental reuse.
+// PBSFileRecord holds per-file metadata and chunk spans for fast incremental reuse.
 type PBSFileRecord struct {
 	Size       int64           `json:"size"`
+	PxarLen    int64           `json:"pxar_len,omitempty"`
 	Mtime      int64           `json:"mtime_ns"`
 	ACLHash    string          `json:"acl_hash,omitempty"`
 	BlobOffset uint64          `json:"blob_offset"`
@@ -126,14 +127,21 @@ func (idx *PBSFileIndex) canReuse(key string, size int64, mtimeNs int64, aclHash
 	if prev.Mtime != 0 && !fileindex.MtimeMatches(prev.Mtime, mtimeNs) {
 		return PBSFileRecord{}, false
 	}
-	var contentLen int64
+	var spanBytes int64
 	for _, sp := range prev.ChunkSpans {
-		contentLen += int64(sp.Len)
+		spanBytes += int64(sp.Len)
 	}
-	if contentLen != size || len(prev.ChunkSpans) == 0 {
+	if len(prev.ChunkSpans) == 0 {
 		return PBSFileRecord{}, false
 	}
-	if aclHash != "" && (prev.ACLHash == "" || prev.ACLHash != aclHash) {
+	wantPxar := prev.PxarLen
+	if wantPxar == 0 {
+		wantPxar = prev.Size // legacy indexes before pxar_len
+	}
+	if spanBytes != wantPxar {
+		return PBSFileRecord{}, false
+	}
+	if aclHash != "" && prev.ACLHash != "" && prev.ACLHash != aclHash {
 		return PBSFileRecord{}, false
 	}
 	if prev.BlobLength == 0 && len(prev.ChunkSpans) == 0 {

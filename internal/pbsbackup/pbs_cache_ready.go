@@ -9,7 +9,7 @@ import (
 
 const pbsCacheReadyName = "pbs_cache.ready"
 
-const minCacheFiles = 100
+const minCacheFiles = 1
 
 func pbsCacheReadyPath(jobID string) (string, error) {
 	dir, err := paths.IndexDir(jobID)

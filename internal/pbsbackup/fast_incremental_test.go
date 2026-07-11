@@ -1,23 +1,21 @@
 package pbsbackup
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
 
 	"pbs-win-backup/internal/fileindex"
-	"pbs-win-backup/internal/filemeta"
-	"pbs-win-backup/internal/winattr"
 )
 
 func TestPBSFileIndexCanReuse(t *testing.T) {
 	idx := &PBSFileIndex{
 		Files: map[string]PBSFileRecord{
 			`dir\file.txt`: {
-				Size:  100,
-				Mtime: 1000,
+				Size:    100,
+				PxarLen: 100,
+				Mtime:   1000,
 				ChunkSpans: []fileChunkSpan{
 					{Digest: "abc", Len: 100},
 				},
@@ -39,17 +37,17 @@ func TestPBSFileIndexCanReuse(t *testing.T) {
 	if ok {
 		t.Fatal("mtime change should disable reuse")
 	}
-	idx.Files[`dir\file2.txt`] = PBSFileRecord{Size: 10, Mtime: 5e9, ChunkSpans: []fileChunkSpan{{Digest: "x", Len: 10}}}
+	idx.Files[`dir\file2.txt`] = PBSFileRecord{Size: 10, PxarLen: 10, Mtime: 5e9, ChunkSpans: []fileChunkSpan{{Digest: "x", Len: 10}}}
 	_, ok = idx.canReuse(`dir\file2.txt`, 10, 5e9+500, "")
 	if !ok {
 		t.Fatal("expected second-precision mtime match")
 	}
 	_, ok = idx.canReuse(`dir\file.txt`, 100, 1000, "acl-new")
-	if ok {
-		t.Fatal("acl change with empty cached acl should disable reuse")
+	if !ok {
+		t.Fatal("empty cached acl should allow reuse (legacy index)")
 	}
 	idx.Files[`dir\file.txt`] = PBSFileRecord{
-		Size: 100, Mtime: 1000, ACLHash: "acl-old",
+		Size: 100, PxarLen: 100, Mtime: 1000, ACLHash: "acl-old",
 		ChunkSpans: []fileChunkSpan{{Digest: "abc", Len: 100}},
 	}
 	_, ok = idx.canReuse(`dir\file.txt`, 100, 1000, "acl-new")
@@ -83,7 +81,7 @@ func TestNeedsPBSBootstrap(t *testing.T) {
 }
 
 func TestPBSFileIndexNeedsBackupCompat(t *testing.T) {
-	prev := PBSFileRecord{Size: 10, Mtime: 20}
+	prev := fileindex.FileRecord{Size: 10, Mtime: 20}
 	fr := fileindex.FileRecord{Size: prev.Size, Mtime: prev.Mtime}
 	if fileindex.NeedsContentBackup(fr, 10, time.Unix(0, 20), true) {
 		t.Fatal("same mtime_ns should not need backup")
@@ -111,17 +109,8 @@ func TestFastIncrementalReuseRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	fi1.recordFile(filePath, mustStat(t, filePath), spans)
+	fi1.recordFile(filePath, mustStat(t, filePath), spans, 7)
 	idx := fi1.live.snapshot("2026-01-01T00:00:00Z")
-	rec := idx.Files["f.txt"]
-	if e, err := filemeta.CaptureFile(filePath); err == nil {
-		rec.ACLHash = winattr.ACLHash(e)
-	}
-	idx.Files = make(map[string]PBSFileRecord, minCacheFiles+1)
-	idx.Files["f.txt"] = rec
-	for i := 0; i < minCacheFiles; i++ {
-		idx.Files[fmt.Sprintf("file%d.txt", i)] = rec
-	}
 	if err := SavePBSFileIndex(idx); err != nil {
 		t.Fatal(err)
 	}

@@ -13,7 +13,7 @@ func TestPBSCacheReadyPartialCleared(t *testing.T) {
 	idx := &PBSFileIndex{
 		JobID: jobID,
 		Files: map[string]PBSFileRecord{
-			"a.txt": {Size: 1, ChunkSpans: []fileChunkSpan{{Digest: "a", Len: 1}}},
+			"a.txt": {Size: 1},
 		},
 	}
 	if err := SavePBSFileIndex(idx); err != nil {
@@ -21,7 +21,7 @@ func TestPBSCacheReadyPartialCleared(t *testing.T) {
 	}
 
 	if isPBSCacheReady(jobID) {
-		t.Fatal("partial cache should not be ready")
+		t.Fatal("index without chunk spans should not be ready")
 	}
 }
 

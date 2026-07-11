@@ -449,7 +449,7 @@ func backupReal(ctx context.Context, client *pbscommon.PBSClient, server models.
 			filePxarStart,
 			pxarStreamBytes,
 		)
-		fi.recordFile(path, info, spans)
+		fi.recordFile(path, info, spans, int64(pxarStreamBytes-filePxarStart))
 	}
 	archive.WriteCB = func(b []byte) {
 		if streamErr != nil {

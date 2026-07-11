@@ -1,5 +1,5 @@
 package version
 
-const Version = "2.3.3"
+const Version = "2.3.4"
 
 const Author = "John Watson"

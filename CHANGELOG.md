@@ -12,6 +12,15 @@
 
 Started in 2018: new **HP ProLiant DL380 Gen9** (~**$48k** at 2018 FX), StoreOnce 14 TB licensed / 40 TB disks — HP wanted almost the full server price to unlock capacity; controller swap instead. Then PBS; **PbsWinBackup** → **ClickRAX** after the vendor quote and because the Windows CLI client wasn't enough day to day.
 
+### [2.3.4] — 2026-07-11
+
+PBS fast incremental fixes:
+
+- Fix local index reuse: compare chunk span bytes to PXAR stream length, not raw file size
+- Store ACL hash in index so Windows files are not re-read every run
+- Enable fast cache after first indexed file (was 100-file minimum)
+- CI: correct go vet flag for Windows syscall bindings
+
 ### [2.3.3] — 2026-07-11
 
 Stability and GUI fixes:
@@ -63,6 +72,15 @@ Scripts and experiments that grew into the client. Nothing was published.
 **2.3 — первый публичный релиз.** Версии 2.0–2.2 несколько лет крутились приватно на своих ПК и локальных PBS, потом выложили на GitHub.
 
 С 2018: новый **HP ProLiant DL380 Gen9** (~**$48k** по курсу 2018), StoreOnce 14 ТБ / 40 ТБ дисков — HP за разблокировку места выставили почти цену сервера, обошлись сменой контроллера. Потом PBS; **PbsWinBackup** → **ClickRAX** — и после такого ценника, и потому что консольного клиента на Windows мало.
+
+### [2.3.4] — 2026-07-11
+
+Исправления быстрого PBS-инкремента:
+
+- Локальный индекс: сравнение spans с длиной PXAR-потока, а не с размером файла
+- Сохранение ACL hash в индексе — Windows-файлы не перечитываются каждый раз
+- Кэш fast-incremental включается после первого проиндексированного файла (раньше нужно было 100)
+- CI: исправлен флаг go vet для Windows syscall
 
 ### [2.3.3] — 2026-07-11
 
