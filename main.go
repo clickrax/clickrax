@@ -113,8 +113,8 @@ func main() {
 	}
 
 	if err := singleinstance.Acquire(); err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
-		os.Exit(1)
+		// Another instance is running; its window was brought to front.
+		os.Exit(0)
 	}
 	defer singleinstance.Release()
 
