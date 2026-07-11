@@ -1,0 +1,44 @@
+name: Bug report
+description: Something does not work as expected
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for testing ClickRAX. You can also report bugs on Telegram: [@Johnwatson7777](https://t.me/Johnwatson7777).
+
+        Please do **not** paste real PBS tokens, passwords, or internal URLs.
+  - type: input
+    id: version
+    attributes:
+      label: ClickRAX version
+      placeholder: "2.3"
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Windows version
+      options:
+        - Windows 10
+        - Windows 11
+        - Windows Server 2016
+        - Windows Server 2019
+        - Windows Server 2022
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: What happened?
+      description: Steps to reproduce, expected vs actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / screenshots
+      description: Optional — `%ProgramData%\ClickRAX\logs\`, Diagnostics screen, Event Viewer

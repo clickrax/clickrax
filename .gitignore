@@ -1,0 +1,45 @@
+# Build artifacts (local only)
+build/bin/
+bin/*.exe
+*.exe
+!release/**/*.exe
+frontend/dist/
+frontend/node_modules/
+rsrc_windows_*.syso
+
+# Legacy local binary names in repo root
+/pbs-win-backup.exe
+/cli.exe
+
+# Archives (allow release/*.zip for published binaries)
+*.zip
+!release/**/*.zip
+
+# Installer temp / downloaded WebView2 bootstrapper
+build/windows/installer/tmp/
+
+# OS / IDE / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+.cursor/
+
+# Secrets and runtime data (never commit)
+config.json
+config.json.hmac
+*.hmac
+secrets/
+*.dpapi
+.env
+.env.*
+
+# Test / coverage
+coverage
+coverage.*
+*.out
+profile.cov
+
+# Local logs / backup data (if copied into repo by mistake)
+logs/
+index/

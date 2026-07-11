@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Telegram (bugs & questions)
+    url: https://t.me/Johnwatson7777
+    about: Write in Telegram if GitHub Issues is inconvenient — @Johnwatson7777
+  - name: Security (private)
+    url: https://github.com/clickrax/clickrax/security/advisories/new
+    about: Do not post security issues publicly — use Advisories or Telegram

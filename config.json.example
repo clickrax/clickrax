@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "destinations": [
+    {
+      "id": "00000000-0000-4000-8000-000000000001",
+      "name": "PBS example",
+      "type": "pbs",
+      "url": "https://pbs.example.com:8007",
+      "datastore": "backup",
+      "namespace": "win-host",
+      "token_id": "backup@pbs!win-host",
+      "fingerprint": ""
+    }
+  ],
+  "jobs": [
+    {
+      "id": "00000000-0000-4000-8000-000000000002",
+      "name": "Daily D drive",
+      "destination_id": "00000000-0000-4000-8000-000000000001",
+      "sources": ["D:\\"],
+      "backup_id": "win-host",
+      "vss_enabled": true,
+      "verify_after_backup": true,
+      "schedule": {
+        "enabled": false
+      }
+    }
+  ],
+  "settings": {
+    "language": "ru",
+    "start_with_windows": false,
+    "minimize_to_tray": true,
+    "bandwidth_mbps": 0,
+    "network_timeout_sec": 120,
+    "network_retries": 5,
+    "log_level": "info",
+    "check_updates": true
+  }
+}
