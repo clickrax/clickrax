@@ -13,6 +13,16 @@ Also **SMB** and **FTP/FTPS**: incremental ZIP with NTFS metadata. For home labs
 
 ---
 
+## Screenshots
+
+**Progress** during a PBS backup: throughput, chunks, queue, and service status. UI in English and Russian.
+
+![ClickRAX — backup progress to PBS (EN)](docs/screenshots/progress-en.png)
+
+![ClickRAX — выполнение бэкапа на PBS (RU)](docs/screenshots/progress-ru.png)
+
+---
+
 ## Where ClickRAX came from
 
 In 2018 I bought a new **HP ProLiant DL380 Gen9** for backups — about **$48,000** at 2018 exchange rates. StoreOnce, **14 TB** license, **40 TB** of disks in the box. HP quoted almost the full server price just to unlock the rest of the capacity. Paying again for hardware that was already there made no sense. Swapped the controller, got all 40 TB.
