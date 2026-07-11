@@ -159,16 +159,9 @@ func shortenErr(err error) string {
 
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
-	cfg, err := config.Load()
+	cfg, err := config.LoadResilient()
 	if err != nil {
 		runtime.LogError(ctx, "config load: "+err.Error())
-		if cfgPath, perr := paths.ConfigPath(); perr == nil {
-			if _, statErr := os.Stat(cfgPath); statErr == nil {
-				bak := cfgPath + ".corrupt-" + time.Now().Format("20060102-150405")
-				_ = os.Rename(cfgPath, bak)
-				runtime.LogError(ctx, "corrupt config quarantined to "+bak)
-			}
-		}
 		cfg = config.DefaultConfig()
 	}
 	a.store = appstore.New(cfg)

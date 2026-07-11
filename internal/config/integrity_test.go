@@ -36,4 +36,9 @@ func TestConfigIntegrityRoundTrip(t *testing.T) {
 	if err := verifyConfigBytes(tampered, sigPath); err == nil {
 		t.Fatal("expected tampered config to fail verification")
 	}
+	// Valid JSON with stale HMAC is auto-healed on load (ensureConfigSignature re-signs).
+	stale := []byte(`{"version":1,"jobs":[]}`)
+	if err := ensureConfigSignature(cfgPath, stale); err != nil {
+		t.Fatalf("auto-heal stale hmac: %v", err)
+	}
 }

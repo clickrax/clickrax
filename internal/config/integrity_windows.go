@@ -7,6 +7,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -80,10 +81,21 @@ func writeConfigSignature(configPath string, data []byte) error {
 
 func ensureConfigSignature(configPath string, data []byte) error {
 	sigPath := configSigPath(configPath)
-	if _, err := os.Stat(sigPath); err == nil {
-		return verifyConfigBytes(data, sigPath)
+	if _, err := os.Stat(sigPath); err != nil {
+		if os.IsNotExist(err) {
+			return writeConfigSignature(configPath, data)
+		}
+		return err
 	}
-	return writeConfigSignature(configPath, data)
+	if err := verifyConfigBytes(data, sigPath); err != nil {
+		// After upgrade/migration or manual edit the JSON may be valid but HMAC stale.
+		// Re-sign locally instead of blocking startup (avoids empty UI + quarantine loops).
+		if json.Valid(data) {
+			return writeConfigSignature(configPath, data)
+		}
+		return err
+	}
+	return nil
 }
 
 // IntegrityFingerprint returns a short diagnostic hash of the signing key source (not secret).
