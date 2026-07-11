@@ -1,7 +1,6 @@
 # ClickRAX — Administrator Guide (English)
 
-**Languages:** [English](admin-guide-en.md) · [Русский](admin-guide-ru.md)  
-**Repository:** https://github.com/clickrax/clickrax
+[English](admin-guide-en.md) · [Русский](admin-guide-ru.md)
 
 ## Installation
 

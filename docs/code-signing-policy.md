@@ -10,7 +10,7 @@
 
 1. Tag `v*` on the main branch.
 2. GitHub Actions builds binaries from source (no manual edits to release artifacts).
-3. SignPath Foundation signs artifacts after maintainer approval.
+3. SignPath Foundation signs artifacts after author approval.
 
 ## Team roles
 

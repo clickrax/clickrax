@@ -1,7 +1,6 @@
 # Changelog / История изменений
 
-**Languages:** [English](#english) · [Русский](#русский)  
-**Repository:** https://github.com/clickrax/clickrax
+[English](#english) · [Русский](#русский)
 
 ---
 
@@ -15,15 +14,15 @@ Started in 2018: new **HP ProLiant DL380 Gen9** (~**$48k** at 2018 FX), StoreOnc
 
 ### [2.3.3] — 2026-07-11
 
-Post-release fixes before public launch:
+Stability and GUI fixes:
 
 - Production GUI: Vite embed paths and WebView2 asset loading
-- Config: read without blocking on service lock; auto-recover from quarantine backups
+- Config: read without blocking on service lock; auto-recover from backup copies
 - HMAC integrity no longer wipes servers on startup
 
-### [2.3] — 2026-07-11 (public)
+### [2.3] — 2026-07-11
 
-First public release as **ClickRAX**.
+First GitHub release as **ClickRAX**.
 
 - Fast PBS incremental: unchanged files are not re-read (size + mtime, chunk reuse from server)
 - GUI and Windows service share the same backup runner
@@ -67,15 +66,15 @@ Scripts and experiments that grew into the client. Nothing was published.
 
 ### [2.3.3] — 2026-07-11
 
-Исправления перед публикацией:
+Исправления стабильности и GUI:
 
 - GUI в production: пути Vite и загрузка assets в WebView2
-- Конфиг: чтение без блокировки службой; восстановление из quarantine-бэкапов
+- Конфиг: чтение без блокировки службой; восстановление из резервных копий
 - HMAC больше не обнуляет серверы при старте
 
-### [2.3] — 2026-07-11 (публичный)
+### [2.3] — 2026-07-11
 
-Первый публичный релиз под именем **ClickRAX**.
+Первый релиз на GitHub под именем **ClickRAX**.
 
 - Быстрый PBS-инкремент: неизменённые файлы не перечитываются (size + mtime, chunks с сервера)
 - GUI и служба Windows используют один и тот же код бэкапа

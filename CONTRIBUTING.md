@@ -1,7 +1,6 @@
 # Contributing / Участие в разработке
 
-**Languages:** [English](#english) · [Русский](#русский)  
-**Repository:** https://github.com/clickrax/clickrax
+[English](#english) · [Русский](#русский)
 
 ---
 

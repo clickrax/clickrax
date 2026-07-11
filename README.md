@@ -1,8 +1,7 @@
 # ClickRAX
 
-**Языки / Languages:** [Русский](README.md) · [English](README.en.md)  
-**Репозиторий / Repository:** https://github.com/clickrax/clickrax  
-**Автор / Author:** John Watson · Telegram [@Johnwatson7777](https://t.me/Johnwatson7777)
+**Автор / Author:** John Watson · Telegram [@Johnwatson7777](https://t.me/Johnwatson7777)  
+**Языки / Languages:** [Русский](README.md) · [English](README.en.md)
 
 Резервное копирование Windows на **Proxmox Backup Server** — с нормальными инкрементами, VSS и восстановлением файлов из снапшота без танцев с `proxmox-backup-client` вручную.
 

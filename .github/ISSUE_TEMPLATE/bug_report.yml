@@ -14,7 +14,7 @@ body:
     id: version
     attributes:
       label: ClickRAX version
-      placeholder: "2.3"
+      placeholder: "2.3.3"
     validations:
       required: true
   - type: dropdown

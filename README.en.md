@@ -1,8 +1,7 @@
 # ClickRAX
 
-**Languages:** [English](README.en.md) · [Русский](README.md)  
-**Repository:** https://github.com/clickrax/clickrax  
-**Author:** John Watson · Telegram [@Johnwatson7777](https://t.me/Johnwatson7777)
+**Author:** John Watson · Telegram [@Johnwatson7777](https://t.me/Johnwatson7777)  
+**Languages:** [English](README.en.md) · [Русский](README.md)
 
 Windows backup client for **Proxmox Backup Server** — incrementals, VSS, restore a file from a snapshot without hand-running `proxmox-backup-client`.
 

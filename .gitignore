@@ -43,3 +43,14 @@ profile.cov
 # Local logs / backup data (if copied into repo by mistake)
 logs/
 index/
+
+# Author-only notes (never commit)
+docs/MAINTAINER.md
+docs/github-publish.ru.md
+docs/github-upload-web.ru.md
+docs/release-v2.3.ru.md
+scripts/make-repo-public.ps1
+scripts/make-repo-private.ps1
+scripts/configure-github-repo.ps1
+scripts/upload-to-github.ps1
+scripts/restore-config.ps1

@@ -1,7 +1,5 @@
 # Developer CLI tools / Утилиты для разработчиков
 
-**Repository:** https://github.com/clickrax/clickrax
-
 These programs are for **local development and troubleshooting only**. They are not built or distributed in release packages.
 
 | Tool | Purpose |
