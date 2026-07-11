@@ -8,9 +8,9 @@ Windows backup client for **Proxmox Backup Server** — incrementals, VSS, resto
 
 Also **SMB** and **FTP/FTPS**: incremental ZIP with NTFS metadata. For home labs and small setups where PBS is already there.
 
-**Current version: 2.3** — [clickrax.exe](https://github.com/clickrax/clickrax/raw/main/release/v2.3/clickrax.exe) · [clickrax-cli.exe](https://github.com/clickrax/clickrax/raw/main/release/v2.3/clickrax-cli.exe) · [ZIP](https://github.com/clickrax/clickrax/raw/main/release/v2.3/clickrax-windows-amd64-portable.zip) · [installer](https://github.com/clickrax/clickrax/raw/main/release/v2.3/clickrax-amd64-installer.exe) · [папка release/v2.3](https://github.com/clickrax/clickrax/tree/main/release/v2.3)
+**Current version: 2.3.3** — [clickrax.exe](https://github.com/clickrax/clickrax/raw/main/release/v2.3/clickrax.exe) · [clickrax-cli.exe](https://github.com/clickrax/clickrax/raw/main/release/v2.3/clickrax-cli.exe) · [ZIP](https://github.com/clickrax/clickrax/raw/main/release/v2.3/clickrax-windows-amd64-portable.zip) · [installer](https://github.com/clickrax/clickrax/raw/main/release/v2.3/clickrax-amd64-installer.exe) · [папка release/v2.3](https://github.com/clickrax/clickrax/tree/main/release/v2.3)
 
-> **Downloading exe:** files live in **[release/v2.3/](https://github.com/clickrax/clickrax/tree/main/release/v2.3)** in the repo. Before web upload run `.\scripts\prepare-github.ps1` to build and copy binaries there (see [docs/release-v2.3.ru.md](docs/release-v2.3.ru.md)).
+> **Downloading exe:** ready-made files are in **[release/v2.3/](https://github.com/clickrax/clickrax/tree/main/release/v2.3)** (links above).
 
 ---
 
@@ -273,20 +273,4 @@ Security vulnerabilities — **not** via public Issues; see [SECURITY.md](SECURI
 
 Do not commit real PBS URLs, tokens, fingerprints, or internal IPs. Example config: [config.json.example](config.json.example).
 
-First GitHub releases are **unsigned** (binaries from Actions/Releases). Code signing planned later — [docs/code-signing-policy.md](docs/code-signing-policy.md).
-
----
-
-## GitHub About (copy-paste)
-
-**English:**
-```
-Windows backup client for Proxmox Backup Server — incremental backups, VSS, file restore. Also SMB/FTP. Windows service, CLI, Zabbix. UI in English & Russian.
-```
-
-**Русский:**
-```
-Клиент бэкапа Windows → Proxmox Backup Server: инкременты, VSS, восстановление файлов. Также SMB/FTP. Служба Windows, CLI, Zabbix. Интерфейс RU/EN.
-```
-
-**Topics:** `windows` `backup` `proxmox-backup-server` `pbs` `incremental-backup` `vss` `golang` `wails` `multilingual`
+First GitHub releases are **unsigned**. Code signing planned later — [docs/code-signing-policy.md](docs/code-signing-policy.md).
