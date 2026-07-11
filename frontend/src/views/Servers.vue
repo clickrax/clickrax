@@ -8,6 +8,7 @@ import {
   TestDestinationConnection,
   TestDestinationByID,
   FetchFingerprint,
+  GetHostname,
   ReloadStoreFromDisk,
 } from '../../wailsjs/go/main/App'
 import { models } from '../../wailsjs/go/models'
