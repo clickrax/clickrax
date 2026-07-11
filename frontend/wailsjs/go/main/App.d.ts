@@ -92,6 +92,8 @@ export function PickFolder():Promise<string>;
 
 export function PickRestoreFolder():Promise<string>;
 
+export function ReloadStoreFromDisk():Promise<void>;
+
 export function RestartService():Promise<models.ServiceActionResult>;
 
 export function RestoreBatch(arg1:models.RestoreBatchRequest):Promise<void>;

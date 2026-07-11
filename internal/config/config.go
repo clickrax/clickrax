@@ -2,7 +2,6 @@ package config
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 	"sync"
 
@@ -67,62 +66,25 @@ func Load() (*models.Config, error) {
 	mu.Lock()
 	defer mu.Unlock()
 
-	var cfg *models.Config
-	err := datalock.With("config", func() error {
-		path, err := paths.ConfigPath()
-		if err != nil {
-			return err
-		}
-
-		data, err := os.ReadFile(path)
-		if err != nil {
-			if os.IsNotExist(err) {
-				dir, derr := paths.DataDir()
-				if derr != nil {
-					return derr
-				}
-				if paths.InstallHasData(dir) {
-					return fmt.Errorf("config.json not found in %s but other installation data exists; restore config from backup", dir)
-				}
-				c := DefaultConfig()
-				if saveErr := saveUnlocked(c); saveErr != nil {
-					return saveErr
-				}
-				cfg = c
-				NormalizeSettings(&cfg.Settings)
-				return nil
-			}
-			return err
-		}
-
-		if err := ensureConfigSignature(path, data); err != nil {
-			return err
-		}
-
-		var loaded models.Config
-		if err := json.Unmarshal(data, &loaded); err != nil {
-			return err
-		}
-		if loaded.Settings.DefaultExclusions == nil {
-			loaded.Settings.DefaultExclusions = DefaultExclusions()
-		}
-		normLang := locale.Normalize(loaded.Settings.Language)
-		if loaded.Settings.Language != normLang {
-			loaded.Settings.Language = normLang
-		}
-		migrated := normalizeConfig(&loaded)
-		normalizeJobs(&loaded)
-		if migrated {
-			if err := saveUnlocked(&loaded); err != nil {
-				return fmt.Errorf("config migration save: %w", err)
-			}
-		}
-		cfg = &loaded
-		NormalizeSettings(&loaded.Settings)
-		return nil
-	})
+	path, err := paths.ConfigPath()
 	if err != nil {
 		return nil, err
+	}
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return createDefaultConfigFile()
+		}
+		return nil, err
+	}
+
+	cfg, migrated, err := parseConfigFile(path, data)
+	if err != nil {
+		return nil, err
+	}
+	if migrated {
+		persistMigration(cfg)
 	}
 	return cfg, nil
 }

@@ -8,6 +8,11 @@ import (
 const AppFolderName = "ClickRAX"
 const legacyAppFolderName = "PbsWinBackup"
 
+// ConfigFileHasUserData reports whether a config.json file has destinations, legacy servers, or jobs.
+func ConfigFileHasUserData(path string) bool {
+	return configHasUserData(path)
+}
+
 func DataDir() (string, error) {
 	programData := os.Getenv("ProgramData")
 	if programData == "" {

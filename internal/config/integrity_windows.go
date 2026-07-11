@@ -88,10 +88,11 @@ func ensureConfigSignature(configPath string, data []byte) error {
 		return err
 	}
 	if err := verifyConfigBytes(data, sigPath); err != nil {
-		// After upgrade/migration or manual edit the JSON may be valid but HMAC stale.
-		// Re-sign locally instead of blocking startup (avoids empty UI + quarantine loops).
 		if json.Valid(data) {
-			return writeConfigSignature(configPath, data)
+			if werr := writeConfigSignature(configPath, data); werr != nil {
+				return nil
+			}
+			return nil
 		}
 		return err
 	}

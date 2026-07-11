@@ -5,7 +5,7 @@ import { useRouter } from 'vue-router'
 import {
   ListDestinations, ListJobs, GetHistory, IsBackupRunning, GetNextScheduledRun,
   RunQuickBackup, PickFolder, ListVolumes, GetHostname, TestDestinationConnection, EstimatePath,
-  GetLastSuccessfulBackup, ClearBackupLock, GetExecutionState,
+  GetLastSuccessfulBackup, ClearBackupLock, GetExecutionState, ReloadStoreFromDisk,
 } from '../../wailsjs/go/main/App'
 import { EventsOn } from '../../wailsjs/runtime/runtime'
 import { models } from '../../wailsjs/go/models'
@@ -304,7 +304,8 @@ async function restoreLast() {
 }
 
 onMounted(() => {
-  loadSummary()
+  void ReloadStoreFromDisk().finally(() => loadSummary())
+  EventsOn('config-reloaded', () => { loadSummary() })
   EventsOn('backup-finished', async () => {
     running.value = false
     await refreshHistory()
@@ -317,7 +318,7 @@ onMounted(() => {
 })
 
 onActivated(() => {
-  loadSummary()
+  void ReloadStoreFromDisk().finally(() => loadSummary())
 })
 </script>
 

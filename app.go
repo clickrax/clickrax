@@ -162,11 +162,26 @@ func (a *App) startup(ctx context.Context) {
 	cfg, err := config.LoadResilient()
 	if err != nil {
 		runtime.LogError(ctx, "config load: "+err.Error())
+	}
+	if config.IsEmpty(cfg) {
+		if path, perr := paths.ConfigPath(); perr == nil && paths.ConfigFileHasUserData(path) {
+			if cfg2, err2 := config.LoadResilient(); err2 == nil && !config.IsEmpty(cfg2) {
+				cfg = cfg2
+			} else if err2 != nil {
+				runtime.LogError(ctx, "config on disk has data but store is empty: "+err2.Error())
+			}
+		}
+	}
+	if cfg == nil {
 		cfg = config.DefaultConfig()
 	}
 	a.store = appstore.New(cfg)
 	pbsbackup.SetChunkWorkersSetting(cfg.Settings.ChunkWorkers)
 	a.migrateServerSecrets()
+
+	if config.IsEmpty(cfg) {
+		go a.reloadStoreWhenReady(ctx)
+	}
 
 	if records, err := history.Load(); err == nil {
 		a.history = records
@@ -182,6 +197,24 @@ func (a *App) startup(ctx context.Context) {
 	paths.EnsureSharedDataAccess()
 	go a.processBackupQueue()
 	go a.runScheduleLoop(ctx)
+}
+
+func (a *App) reloadStoreWhenReady(ctx context.Context) {
+	for attempt := 0; attempt < 20; attempt++ {
+		time.Sleep(500 * time.Millisecond)
+		cfg, err := config.LoadResilient()
+		if err != nil || config.IsEmpty(cfg) {
+			continue
+		}
+		a.mu.Lock()
+		a.store.Replace(cfg)
+		a.mu.Unlock()
+		pbsbackup.SetChunkWorkersSetting(cfg.Settings.ChunkWorkers)
+		a.migrateServerSecrets()
+		runtime.EventsEmit(a.ctx, "config-reloaded", nil)
+		runtime.LogInfo(ctx, "config store reloaded from disk")
+		return
+	}
 }
 
 func (a *App) migrateServerSecrets() {

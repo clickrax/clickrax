@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"pbs-win-backup/internal/appstore"
+	"pbs-win-backup/internal/config"
 	"pbs-win-backup/internal/locale"
 	"pbs-win-backup/internal/models"
 	"pbs-win-backup/internal/notify"
@@ -12,6 +13,20 @@ import (
 
 func (a *App) GetConfig() *models.Config {
 	return a.store.Get()
+}
+
+// ReloadStoreFromDisk re-reads config.json into the in-memory store (GUI refresh after lock contention).
+func (a *App) ReloadStoreFromDisk() error {
+	cfg, err := config.LoadResilient()
+	if err != nil {
+		return err
+	}
+	a.mu.Lock()
+	a.store.Replace(cfg)
+	a.mu.Unlock()
+	pbsbackup.SetChunkWorkersSetting(cfg.Settings.ChunkWorkers)
+	a.migrateServerSecrets()
+	return nil
 }
 
 func (a *App) SaveDestination(dest models.BackupDestination, secret string) error {

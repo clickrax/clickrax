@@ -182,6 +182,10 @@ export function PickRestoreFolder() {
   return window['go']['main']['App']['PickRestoreFolder']();
 }
 
+export function ReloadStoreFromDisk() {
+  return window['go']['main']['App']['ReloadStoreFromDisk']();
+}
+
 export function RestartService() {
   return window['go']['main']['App']['RestartService']();
 }

@@ -8,7 +8,7 @@ import {
   TestDestinationConnection,
   TestDestinationByID,
   FetchFingerprint,
-  GetHostname,
+  ReloadStoreFromDisk,
 } from '../../wailsjs/go/main/App'
 import { models } from '../../wailsjs/go/models'
 import { useBackdropDismiss } from '../composables/useBackdropDismiss'
@@ -173,7 +173,7 @@ function statusLabel(id: string) {
   return s.online ? t('servers.online') : t('servers.offline')
 }
 
-onMounted(load)
+onMounted(() => { void ReloadStoreFromDisk().finally(() => load()) })
 </script>
 
 <template>
