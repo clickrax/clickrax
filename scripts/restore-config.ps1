@@ -22,4 +22,4 @@ if (-not $corrupt) {
 $best = $corrupt[0]
 Write-Host "Restore from: $($best.Name) ($($best.Length) bytes)" -ForegroundColor Cyan
 Copy-Item $best.FullName $cfg -Force
-Write-Host "Restored config.json. Rebuild/install ClickRAX 2.3.2+ and start the app." -ForegroundColor Green
+Write-Host "Restored config.json. Start ClickRAX." -ForegroundColor Green

@@ -1,4 +1,4 @@
-# Maintainer CLI tools / Утилиты для разработчиков
+# Developer CLI tools / Утилиты для разработчиков
 
 **Repository:** https://github.com/clickrax/clickrax
 

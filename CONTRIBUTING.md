@@ -57,9 +57,9 @@ go vet ./...
 
 Go module: `pbs-win-backup` (legacy). Product name: **ClickRAX**.
 
-### Maintainer tools
+### Developer utilities
 
-See [cmd/README.md](cmd/README.md) — not shipped in releases.
+See [cmd/README.md](cmd/README.md) — local troubleshooting tools, not shipped in releases.
 
 ### License
 
@@ -119,9 +119,9 @@ go vet ./...
 
 Go module: `pbs-win-backup` (legacy). Продукт: **ClickRAX**.
 
-### Утилиты maintainer
+### Утилиты разработчика
 
-См. [cmd/README.md](cmd/README.md) — не входят в релиз.
+См. [cmd/README.md](cmd/README.md) — локальные утилиты, не входят в релиз.
 
 ### Лицензия
 
