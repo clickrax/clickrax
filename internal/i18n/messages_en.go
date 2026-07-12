@@ -101,6 +101,7 @@ var en = map[string]string{
 	"backup.archive_upload":        "Archiving and uploading to {{type}}...",
 	"backup.completed_type":        "Backup completed ({{type}})",
 	"backup.completed_type_dest":   "Backup completed ({{type}} → {{dest}})",
+	"backup.files_skipped_info":    "Backup completed; fast incremental skipped {{n}} unchanged files",
 	"backup.job_running":           "job is already running",
 	"backup.interrupted":           "Backup interrupted",
 	"backup.interrupted_incomplete": "Backup not completed",
@@ -243,6 +244,8 @@ var en = map[string]string{
 	// notify.*
 	"notify.smtp_not_configured":   "SMTP not configured",
 	"notify.smtp_fields_required":  "enter SMTP server, sender, and recipient",
+	"notify.email_failed":          "Backup done, but e-mail failed: {{err}}",
+	"notify.email_skipped":         "E-mail not sent (mode={{mode}}, status={{status}})",
 	"notify.test_subject":          "{{app}} [{{host}}]: test email",
 	"notify.test_body":             "This is a test email from {{app}}.\r\nComputer: {{host}}\r\n\r\nIf you received it, SMTP is configured correctly.",
 	"notify.kind_backup":           "backup",

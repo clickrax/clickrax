@@ -240,10 +240,7 @@ func (e *Engine) Run(ctx context.Context, params RunParams) (models.JobRunResult
 		result.BytesReused = stats.BytesSkipped.Load()
 		result.FilesTotal = int(stats.FilesTotal.Load())
 		result.FilesSkipped = int(stats.FilesSkipped.Load())
-		result.Status = "ok"
-		if result.FilesSkipped > 0 {
-			result.Status = "warning"
-		}
+		finalizeRunResult(&result, "", b)
 		result.Snapshot = stats.RemotePath
 		emitProgress(models.ProgressEvent{
 			JobID:            job.ID,
@@ -324,16 +321,7 @@ func (e *Engine) Run(ctx context.Context, params RunParams) (models.JobRunResult
 	result.BytesReused = stats.BytesReused.Load()
 	result.FilesTotal = int(stats.FilesTotal.Load())
 	result.FilesSkipped = int(stats.FilesSkipped.Load())
-	result.Status = "ok"
-	if result.FilesSkipped > 0 {
-		result.Status = "warning"
-	}
-	if stats.Warning != "" {
-		result.Status = "warning"
-		if result.Message == "" {
-			result.Message = stats.Warning
-		}
-	}
+	finalizeRunResult(&result, stats.Warning, b)
 	if stats.BackupTimeUnix > 0 {
 		result.Snapshot = time.Unix(stats.BackupTimeUnix, 0).UTC().Format(time.RFC3339)
 	} else {

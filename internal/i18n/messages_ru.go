@@ -101,6 +101,7 @@ var ru = map[string]string{
 	"backup.archive_upload":        "Архивация и загрузка на {{type}}...",
 	"backup.completed_type":        "Бэкап завершён ({{type}})",
 	"backup.completed_type_dest":   "Бэкап завершён ({{type}} → {{dest}})",
+	"backup.files_skipped_info":    "Бэкап успешен; быстрый инкремент пропустил {{n}} неизменённых файлов",
 	"backup.job_running":           "задание уже выполняется",
 	"backup.interrupted":           "Бэкап прерван",
 	"backup.interrupted_incomplete": "Бэкап не завершён",
@@ -243,6 +244,8 @@ var ru = map[string]string{
 	// notify.*
 	"notify.smtp_not_configured":   "SMTP не настроен",
 	"notify.smtp_fields_required":  "укажите SMTP-сервер, отправителя и получателя",
+	"notify.email_failed":          "Бэкап завершён, но письмо не отправлено: {{err}}",
+	"notify.email_skipped":         "Письмо не отправлено (режим={{mode}}, статус={{status}})",
 	"notify.test_subject":          "{{app}} [{{host}}]: тестовое письмо",
 	"notify.test_body":             "Это тестовое письмо от {{app}}.\r\nКомпьютер: {{host}}\r\n\r\nЕсли вы его получили, SMTP настроен правильно.",
 	"notify.kind_backup":           "бэкап",

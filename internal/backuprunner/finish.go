@@ -22,6 +22,7 @@ type FinishInput struct {
 type FinishOutput struct {
 	Settings models.AppSettings
 	Job      models.BackupJob
+	EmailErr error
 }
 
 // FinishCommon persists history, status, webhook, and email notifications.
@@ -49,8 +50,10 @@ func FinishCommon(in FinishInput) FinishOutput {
 			eventlog.Error("webhook: " + err.Error())
 		}
 	}
+	var emailErr error
 	if err := notify.DispatchBackupEmail(settings, job, in.Result); err != nil {
 		eventlog.Error("SMTP: " + err.Error())
+		emailErr = err
 	}
-	return FinishOutput{Settings: settings, Job: job}
+	return FinishOutput{Settings: settings, Job: job, EmailErr: emailErr}
 }

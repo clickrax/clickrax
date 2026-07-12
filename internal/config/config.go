@@ -124,7 +124,21 @@ func normalizeConfig(cfg *models.Config) bool {
 			j.ServerID = j.DestinationID
 		}
 	}
+	if enableNotifyWhenSMTP(&cfg.Settings) {
+		migrated = true
+	}
 	return migrated
+}
+
+func enableNotifyWhenSMTP(s *models.AppSettings) bool {
+	if s == nil || s.SMTP.Host == "" || s.SMTP.From == "" || s.SMTP.To == "" {
+		return false
+	}
+	if s.NotifyBackup != "" && s.NotifyBackup != "off" {
+		return false
+	}
+	s.NotifyBackup = "always"
+	return true
 }
 
 func normalizeJobs(cfg *models.Config) {

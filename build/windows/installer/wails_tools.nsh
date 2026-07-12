@@ -14,7 +14,7 @@
     !define INFO_PRODUCTNAME "ClickRAX"
 !endif
 !ifndef INFO_PRODUCTVERSION
-    !define INFO_PRODUCTVERSION "2.3.5.0"
+    !define INFO_PRODUCTVERSION "2.3.6.0"
 !endif
 !ifndef INFO_COPYRIGHT
     !define INFO_COPYRIGHT "Copyright © John Watson. All rights reserved."

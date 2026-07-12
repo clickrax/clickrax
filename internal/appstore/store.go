@@ -253,6 +253,7 @@ func (s *Store) SaveSettings(settings models.AppSettings, smtpPassword string, b
 				return b.Ewrap("smtp.save_failed", map[string]string{"err": err.Error()}, err)
 			}
 		}
+		notify.EnableNotifyWhenSMTP(&settings)
 		cfg.Settings = settings
 		config.NormalizeSettings(&cfg.Settings)
 		return nil

@@ -2,13 +2,22 @@ package notify
 
 import (
 	"pbs-win-backup/internal/credential"
+	"pbs-win-backup/internal/eventlog"
 	"pbs-win-backup/internal/i18n"
 	"pbs-win-backup/internal/models"
 )
 
 func DispatchBackupEmail(settings models.AppSettings, job models.BackupJob, result models.JobRunResult) error {
 	mode := EffectiveNotifyMode(job.NotifyBackup, settings.NotifyBackup)
-	if !ShouldNotify(mode, result.Status) || !SMTPConfigured(settings.SMTP) {
+	if !SMTPConfigured(settings.SMTP) {
+		return nil
+	}
+	if !ShouldNotify(mode, result.Status) {
+		b := i18n.New(settings.Language)
+		eventlog.Info(b.Tf("notify.email_skipped", map[string]string{
+			"mode":   mode,
+			"status": result.Status,
+		}))
 		return nil
 	}
 	pw, err := credential.GetSMTPPassword()

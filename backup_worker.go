@@ -92,13 +92,16 @@ func (a *App) finishBackupRun(
 	}
 	a.mu.Unlock()
 
-	backuprunner.FinishCommon(backuprunner.FinishInput{
+	title := branding.Name
+	out := backuprunner.FinishCommon(backuprunner.FinishInput{
 		Result:   result,
 		Job:      job,
 		Settings: a.store.Settings(),
 	})
+	if out.EmailErr != nil {
+		notify.ShowToast(title, b.Tf("notify.email_failed", map[string]string{"err": out.EmailErr.Error()}))
+	}
 
-	title := branding.Name
 	msg := fmt.Sprintf("%s: %s (%s)", result.JobName, result.Status, result.BackupType)
 	if result.Error != "" {
 		msg = result.JobName + ": " + result.Error

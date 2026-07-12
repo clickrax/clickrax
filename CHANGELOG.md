@@ -12,6 +12,15 @@
 
 Started in 2018: new **HP ProLiant DL380 Gen9** (~**$48k** at 2018 FX), StoreOnce 14 TB licensed / 40 TB disks — HP wanted almost the full server price to unlock capacity; controller swap instead. Then PBS; **PbsWinBackup** → **ClickRAX** after the vendor quote and because the Windows CLI client wasn't enough day to day.
 
+### [2.3.6] — 2026-07-12
+
+Journal and e-mail notification fixes:
+
+- Successful backups no longer show «with warning» just because fast incremental skipped unchanged files
+- Journal details explain how many files were skipped; real warnings (e.g. verify timeout) stay visible
+- E-mail notifications auto-enable when SMTP is configured (was silently off by default)
+- Toast and event log when e-mail delivery fails
+
 ### [2.3.5] — 2026-07-12
 
 PBS backup progress during finalization:
@@ -80,6 +89,15 @@ Scripts and experiments that grew into the client. Nothing was published.
 **2.3 — первый публичный релиз.** Версии 2.0–2.2 несколько лет крутились приватно на своих ПК и локальных PBS, потом выложили на GitHub.
 
 С 2018: новый **HP ProLiant DL380 Gen9** (~**$48k** по курсу 2018), StoreOnce 14 ТБ / 40 ТБ дисков — HP за разблокировку места выставили почти цену сервера, обошлись сменой контроллера. Потом PBS; **PbsWinBackup** → **ClickRAX** — и после такого ценника, и потому что консольного клиента на Windows мало.
+
+### [2.3.6] — 2026-07-12
+
+Журнал и e-mail уведомления:
+
+- Успешный бэкап больше не помечается «с предупреждением» только из‑за пропущенных файлов fast-incremental
+- В журнале видно, сколько файлов пропущено; настоящие предупреждения (verify timeout и т.п.) сохраняются
+- E-mail уведомления включаются автоматически при настроенном SMTP (раньше по умолчанию было «выкл.»)
+- Toast и запись в Event Log при ошибке отправки письма
 
 ### [2.3.5] — 2026-07-12
 
