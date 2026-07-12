@@ -491,11 +491,21 @@ func backupReal(ctx context.Context, client *pbscommon.PBSClient, server models.
 	if err := ctx.Err(); err != nil {
 		return abortScan(err)
 	}
+	if stats != nil {
+		stats.SetStageID(stageFinalizePxarEOF, map[string]string{
+			"n": fmt.Sprintf("%d", pxarChunk.chunkcount),
+		})
+	}
 	if err := pxarChunk.eof(client); err != nil {
 		return nil, err
 	}
 	if pxarChunk.chunkcount == 0 {
 		return nil, i18n.Ef("pbs.pxar_empty", map[string]string{"path": backupdir})
+	}
+	if stats != nil {
+		stats.SetStageID(stageFinalizePcatEOF, map[string]string{
+			"n": fmt.Sprintf("%d", pcatChunk.chunkcount),
+		})
 	}
 	if err := pcatChunk.eof(client); err != nil {
 		return nil, i18n.Ewrap("pbs.catalog_close", nil, err)
@@ -503,8 +513,20 @@ func backupReal(ctx context.Context, client *pbscommon.PBSClient, server models.
 	if pcatChunk.chunkcount == 0 {
 		return nil, i18n.Ef("pbs.catalog_empty", map[string]string{"path": backupdir})
 	}
+	if stats != nil {
+		stats.SetStageID(stageFinalizeUploadMeta, nil)
+	}
 	if err := uploadWinMeta(client, backupdir); err != nil {
 		return nil, err
+	}
+	pxarIdxCount := 0
+	if indexRecorder.index != nil {
+		pxarIdxCount = len(indexRecorder.index.Files)
+	}
+	if stats != nil {
+		stats.SetStageID(stageFinalizeUploadPxarIdx, map[string]string{
+			"count": formatCount(pxarIdxCount),
+		})
 	}
 	if err := uploadPxarIndex(client, indexRecorder.index); err != nil {
 		return nil, i18n.Ewrap("pbs.pxar_index_upload", nil, err)
@@ -514,16 +536,36 @@ func backupReal(ctx context.Context, client *pbscommon.PBSClient, server models.
 		backupTime = time.Now().Unix()
 	}
 	snapshotTime := time.Unix(backupTime, 0).UTC().Format(time.RFC3339)
+	if stats != nil {
+		stats.SetStageID(stageFinalizeManifest, nil)
+	}
 	if err := client.UploadManifest(); err != nil {
 		return nil, err
+	}
+	if stats != nil {
+		stats.SetStageID(stageFinalizeFinish, nil)
 	}
 	if err := client.Finish(); err != nil {
 		return nil, err
 	}
 	committed = true
+	fileIdxCount := int64(0)
+	if stats != nil {
+		fileIdxCount = stats.FilesTotal.Load()
+	}
+	if stats != nil {
+		stats.SetStageID(stageFinalizeSaveFileIdx, map[string]string{
+			"count": formatCount(int(fileIdxCount)),
+		})
+	}
 	if err := fi.save(snapshotTime); err != nil {
 		_ = ClearPBSFileIndex(jobID)
 		return nil, i18n.Ewrap("pbs.fast_index_save", nil, err)
+	}
+	if stats != nil {
+		stats.SetStageID(stageFinalizeSavePxarIdx, map[string]string{
+			"count": formatCount(pxarIdxCount),
+		})
 	}
 	_ = saveLocalPxarIndex(SnapshotRef{
 		BackupID:   client.Manifest.BackupID,

@@ -12,6 +12,14 @@
 
 Started in 2018: new **HP ProLiant DL380 Gen9** (~**$48k** at 2018 FX), StoreOnce 14 TB licensed / 40 TB disks — HP wanted almost the full server price to unlock capacity; controller swap instead. Then PBS; **PbsWinBackup** → **ClickRAX** after the vendor quote and because the Windows CLI client wasn't enough day to day.
 
+### [2.3.5] — 2026-07-12
+
+PBS backup progress during finalization:
+
+- Show detailed finalize stages (76–97%) after data transfer instead of freezing at 75%
+- Status messages for PXAR/catalog close, manifest, Finish, and local index saves
+- Immediate UI update when each finalize step starts
+
 ### [2.3.4] — 2026-07-11
 
 PBS fast incremental fixes:
@@ -72,6 +80,14 @@ Scripts and experiments that grew into the client. Nothing was published.
 **2.3 — первый публичный релиз.** Версии 2.0–2.2 несколько лет крутились приватно на своих ПК и локальных PBS, потом выложили на GitHub.
 
 С 2018: новый **HP ProLiant DL380 Gen9** (~**$48k** по курсу 2018), StoreOnce 14 ТБ / 40 ТБ дисков — HP за разблокировку места выставили почти цену сервера, обошлись сменой контроллера. Потом PBS; **PbsWinBackup** → **ClickRAX** — и после такого ценника, и потому что консольного клиента на Windows мало.
+
+### [2.3.5] — 2026-07-12
+
+Прогресс PBS-бэкапа на этапе финализации:
+
+- Подробные статусы (76–97%) после передачи данных вместо «зависания» на 75%
+- Сообщения для закрытия PXAR/каталога, manifest, Finish и сохранения локальных индексов
+- Мгновенное обновление UI при смене этапа
 
 ### [2.3.4] — 2026-07-11
 

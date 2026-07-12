@@ -29,6 +29,15 @@ type Stats struct {
 	Warning          string
 	fastReuseActive  atomic.Bool
 	stage            atomic.Value // string: current sub-step message for UI
+	stageID          atomic.Value // string: internal stage key for progress mapping
+	progressEmit     func(id string, params map[string]string)
+}
+
+func (s *Stats) bindProgressEmit(fn func(id string, params map[string]string)) {
+	if s == nil {
+		return
+	}
+	s.progressEmit = fn
 }
 
 func (s *Stats) SetFastReuseActive(v bool) {
@@ -49,7 +58,35 @@ func (s *Stats) SetStage(msg string) {
 	if s == nil {
 		return
 	}
+	s.stageID.Store("")
 	s.stage.Store(msg)
+}
+
+func (s *Stats) SetStageID(id string, params map[string]string) {
+	if s == nil || id == "" {
+		return
+	}
+	msg, ok := finalizeStageMessage(id, params)
+	if !ok {
+		return
+	}
+	s.stageID.Store(id)
+	s.stage.Store(msg)
+	if s.progressEmit != nil {
+		s.progressEmit(id, params)
+	}
+}
+
+func (s *Stats) StageID() string {
+	if s == nil {
+		return ""
+	}
+	v := s.stageID.Load()
+	if v == nil {
+		return ""
+	}
+	id, _ := v.(string)
+	return id
 }
 
 func (s *Stats) Stage() string {
@@ -198,6 +235,19 @@ func Run(ctx context.Context, opts Options) (*Stats, error) {
 
 	client := newPBSClient(opts.Server, opts.Secret, backupID)
 
+	stats.bindProgressEmit(func(id string, params map[string]string) {
+		pct, ok := finalizeStagePercent(id)
+		if !ok {
+			return
+		}
+		msg, ok := finalizeStageMessage(id, params)
+		if !ok {
+			return
+		}
+		emit(models.PhaseFinalizing, pct, msg, bytesTotalEstimate)
+		saveCP(models.PhaseFinalizing, pct, "")
+	})
+
 	progressDone := make(chan struct{})
 	var progressWG sync.WaitGroup
 	defer func() {
@@ -220,6 +270,7 @@ func Run(ctx context.Context, opts Options) (*Stats, error) {
 				reuseC := stats.ReusedChunks.Load()
 				files := stats.FilesTotal.Load()
 				estFiles := stats.EstimatedFilesTotal.Load()
+				stageID := stats.StageID()
 				stage := stats.Stage()
 				sample := pbsProgressSample{
 					bytesNew:           stats.BytesNew.Load(),
@@ -238,7 +289,10 @@ func Run(ctx context.Context, opts Options) (*Stats, error) {
 					msg = i18n.L("pbs.preparing", nil)
 				}
 
-				if newC+reuseC > 0 || effectiveProcessedBytes(sample) > 0 || (stats.FastReuseActive() && files > 0) {
+				if pctFin, ok := finalizeStagePercent(stageID); ok {
+					phase = models.PhaseFinalizing
+					pct = pctFin
+				} else if newC+reuseC > 0 || effectiveProcessedBytes(sample) > 0 || (stats.FastReuseActive() && files > 0) {
 					phase = models.PhaseTransfer
 					skipped := stats.FilesSkipped.Load()
 					if skipped > 0 && stats.FastReuseActive() {
@@ -329,6 +383,9 @@ func Run(ctx context.Context, opts Options) (*Stats, error) {
 	}
 
 	if known != nil {
+		stats.SetStageID(stageFinalizeChunkIdx, map[string]string{
+			"n": fmt.Sprintf("%d", known.Len()),
+		})
 		if err := chunkindex.Save(opts.Job.ID, known.ToHashmap(), snapshotTime); err != nil {
 			return nil, i18n.Ewrap("pbs.chunk_index_save", nil, err)
 		}
