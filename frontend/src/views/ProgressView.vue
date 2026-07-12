@@ -195,6 +195,7 @@ onMounted(() => {
     }
     liveProgress.value = progressFromEvent(p)
     if (p.phase === 'done' || p.phase === 'cancelled') {
+      liveProgress.value = null
       setTimeout(refresh, 400)
     }
   })

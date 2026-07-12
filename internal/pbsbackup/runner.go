@@ -11,6 +11,7 @@ import (
 
 	"pbs-win-backup/internal/backuproot"
 	"pbs-win-backup/internal/chunkindex"
+	"pbs-win-backup/internal/eventlog"
 	"pbs-win-backup/internal/i18n"
 	"pbs-win-backup/internal/models"
 )
@@ -250,10 +251,14 @@ func Run(ctx context.Context, opts Options) (*Stats, error) {
 
 	progressDone := make(chan struct{})
 	var progressWG sync.WaitGroup
-	defer func() {
-		close(progressDone)
-		progressWG.Wait()
-	}()
+	var stopProgressOnce sync.Once
+	stopProgress := func() {
+		stopProgressOnce.Do(func() {
+			close(progressDone)
+			progressWG.Wait()
+		})
+	}
+	defer stopProgress()
 	progressWG.Add(1)
 	go func() {
 		defer progressWG.Done()
@@ -360,6 +365,9 @@ func Run(ctx context.Context, opts Options) (*Stats, error) {
 		return nil, err
 	}
 
+	stopProgress()
+	stats.bindProgressEmit(nil)
+
 	emit(models.PhaseFinalizing, 98, i18n.L("pbs.finalizing", nil), 0)
 	backupTime := client.Manifest.BackupTime
 	if backupTime <= 0 {
@@ -387,12 +395,17 @@ func Run(ctx context.Context, opts Options) (*Stats, error) {
 			"n": fmt.Sprintf("%d", known.Len()),
 		})
 		if err := chunkindex.Save(opts.Job.ID, known.ToHashmap(), snapshotTime); err != nil {
-			return nil, i18n.Ewrap("pbs.chunk_index_save", nil, err)
+			msg := i18n.Ewrap("pbs.chunk_index_save", nil, err).Error()
+			eventlog.Error(msg)
+			if stats.Warning == "" {
+				stats.Warning = i18n.L("pbs.chunk_index_save_warn", map[string]string{"err": err.Error()})
+			}
 		}
 	}
 
 	_ = ClearCheckpoint(opts.Job.ID)
 	emit(models.PhaseDone, 100, i18n.L("pbs.done_ok", nil), stats.BytesNew.Load())
+	saveCP(models.PhaseDone, 100, "")
 	return &stats, nil
 }
 

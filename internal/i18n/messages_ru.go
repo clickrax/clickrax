@@ -391,6 +391,7 @@ var ru = map[string]string{
 	"pbs.block_not_loaded":       "блок {{n}} не загружен",
 	"pbs.cache_no_files":         "кэш: в PXAR не найдено файлов",
 	"pbs.chunk_index_save":       "сохранение индекса chunks: {{err}}",
+	"pbs.chunk_index_save_warn":  "Бэкап на PBS завершён; локальный индекс chunks не сохранён: {{err}}",
 	"pbs.path_outside_root":      "путь вне корня бэкапа: {{path}}",
 	"pbs.early_stop_no_data":     "ранняя остановка без извлечённых данных",
 	"pbs.chunk_sha_mismatch":     "chunk {{digest}}: несовпадение SHA-256",

@@ -391,6 +391,7 @@ var en = map[string]string{
 	"pbs.block_not_loaded":       "block {{n}} not loaded",
 	"pbs.cache_no_files":         "cache: no files found in PXAR",
 	"pbs.chunk_index_save":       "saving chunks index: {{err}}",
+	"pbs.chunk_index_save_warn":  "Backup on PBS is complete; local chunk index was not saved: {{err}}",
 	"pbs.path_outside_root":      "path outside backup root: {{path}}",
 	"pbs.early_stop_no_data":     "early stop without extracted data",
 	"pbs.chunk_sha_mismatch":     "chunk {{digest}}: SHA-256 mismatch",
