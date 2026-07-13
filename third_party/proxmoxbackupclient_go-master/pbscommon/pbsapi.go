@@ -473,19 +473,31 @@ func (pbs *PBSClient) UploadBlob(name string, data []byte) error {
 	q.Add("encoded-size", fmt.Sprintf("%d", len(out)))
 	q.Add("file-name", name)
 
-	req, _ := http.NewRequest("POST", pbs.BaseURL+"/blob?"+q.Encode(), bytes.NewBuffer(out))
+	req, err := http.NewRequest("POST", pbs.BaseURL+"/blob?"+q.Encode(), bytes.NewBuffer(out))
+	if err != nil {
+		return err
+	}
+	req.Header.Add("Authorization", fmt.Sprintf("PBSAPIToken=%s:%s", pbs.AuthID, pbs.Secret))
 
 	resp2, err := pbs.Client.Do(req)
 	if err != nil {
 		fmt.Println("Error making request:", err)
 		return err
 	}
+	defer resp2.Body.Close()
 
 	if resp2.StatusCode != http.StatusOK {
-		resp1, err := io.ReadAll(resp2.Body)
-		fmt.Println("Error making request:", string(resp1), string(resp2.Proto))
-		return err
+		body, _ := io.ReadAll(resp2.Body)
+		msg := strings.TrimSpace(string(body))
+		if len(msg) > 200 {
+			msg = msg[:200] + "..."
+		}
+		if msg == "" {
+			msg = resp2.Status
+		}
+		return fmt.Errorf("blob %q HTTP %d: %s", name, resp2.StatusCode, msg)
 	}
+	_, _ = io.Copy(io.Discard, resp2.Body)
 
 	pbs.Manifest.Files = append(pbs.Manifest.Files, File{
 		CryptMode: "none",

@@ -12,6 +12,14 @@
 
 Started in 2018: new **HP ProLiant DL380 Gen9** (~**$48k** at 2018 FX), StoreOnce 14 TB licensed / 40 TB disks — HP wanted almost the full server price to unlock capacity; controller swap instead. Then PBS; **PbsWinBackup** → **ClickRAX** after the vendor quote and because the Windows CLI client wasn't enough day to day.
 
+### [2.3.8] — 2026-07-13
+
+PBS finalize fixes for very large backups (millions of files):
+
+- Fix `UploadBlob` ignoring HTTP errors (false success e-mail, PBS task stuck open)
+- Skip `backup.winmeta.json` / `backup.pxar.index.json` PBS upload when payload exceeds ~16 MiB (PBS limit); warn and keep local copy
+- Cache chunk existence probes — one `GET /chunk` per digest instead of millions of 404s on reuse
+
 ### [2.3.7] — 2026-07-12
 
 Fix false error / stuck UI after successful PBS backup:
@@ -97,6 +105,14 @@ Scripts and experiments that grew into the client. Nothing was published.
 **2.3 — первый публичный релиз.** Версии 2.0–2.2 несколько лет крутились приватно на своих ПК и локальных PBS, потом выложили на GitHub.
 
 С 2018: новый **HP ProLiant DL380 Gen9** (~**$48k** по курсу 2018), StoreOnce 14 ТБ / 40 ТБ дисков — HP за разблокировку места выставили почти цену сервера, обошлись сменой контроллера. Потом PBS; **PbsWinBackup** → **ClickRAX** — и после такого ценника, и потому что консольного клиента на Windows мало.
+
+### [2.3.8] — 2026-07-13
+
+Финализация PBS на очень больших бэкапах (миллионы файлов):
+
+- Исправлен `UploadBlob`: HTTP-ошибки больше не игнорируются (ложное письмо «успех», зависшая задача PBS)
+- `backup.winmeta.json` / `backup.pxar.index.json` не грузятся на PBS, если payload > ~16 МиБ (лимит PBS); предупреждение, локальная копия сохраняется
+- Кэш проверки чанков на PBS — один `GET /chunk` на digest вместо миллионов 404 при reuse
 
 ### [2.3.7] — 2026-07-12
 

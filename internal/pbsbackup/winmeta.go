@@ -8,7 +8,7 @@ import (
 	pbscommon "pbscommon"
 )
 
-func uploadWinMeta(client *pbscommon.PBSClient, backupdir string) error {
+func uploadWinMeta(client *pbscommon.PBSClient, backupdir string, stats *Stats) error {
 	meta, err := filemeta.CollectTree(backupdir, true)
 	if err != nil {
 		return i18n.Ewrap("pbs.acl_collect", nil, err)
@@ -20,7 +20,7 @@ func uploadWinMeta(client *pbscommon.PBSClient, backupdir string) error {
 	if err != nil {
 		return err
 	}
-	return client.UploadBlob(filemeta.PBSBlobName, data)
+	return uploadBlobToPBS(client, stats, filemeta.PBSBlobName, data)
 }
 
 func loadSnapshotMeta(server models.PBSServer, secret string, ref SnapshotRef) (filemeta.Archive, error) {

@@ -87,7 +87,7 @@ func unmarshalPxarIndex(raw []byte) (pxarFileIndex, error) {
 	return idx, nil
 }
 
-func uploadPxarIndex(client *pbscommon.PBSClient, idx *pxarFileIndex) error {
+func uploadPxarIndex(client *pbscommon.PBSClient, idx *pxarFileIndex, stats *Stats) error {
 	if idx == nil || len(idx.Files) == 0 {
 		return nil
 	}
@@ -95,7 +95,7 @@ func uploadPxarIndex(client *pbscommon.PBSClient, idx *pxarFileIndex) error {
 	if err != nil {
 		return err
 	}
-	return client.UploadBlob(pxarIndexBlobName, data)
+	return uploadBlobToPBS(client, stats, pxarIndexBlobName, data)
 }
 
 func loadPxarIndex(server models.PBSServer, secret string, ref SnapshotRef) (pxarFileIndex, bool, error) {

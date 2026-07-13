@@ -44,6 +44,7 @@ type chunkState struct {
 	knownChunks        *knownChunks
 	limiter            *bandwidthLimiter
 	uploads            *chunkUploadPipeline
+	chunkProbeCache    map[string]bool
 }
 
 func (c *chunkState) init(ctx context.Context, stats *Stats, known *knownChunks, limiter *bandwidthLimiter) {
@@ -81,16 +82,25 @@ func (c *chunkState) cancelled() bool {
 	}
 }
 
-func chunkMissingOnServer(client *pbscommon.PBSClient, digestHex string, inKnown bool) bool {
-	if client == nil || !inKnown || client.BaseURL == "" {
+func (c *chunkState) chunkMissingOnServer(client *pbscommon.PBSClient, digestHex string, inKnown bool) bool {
+	if client == nil || !inKnown || digestHex == "" || client.BaseURL == "" {
 		return false
 	}
-	return !client.ChunkExists(digestHex)
+	if c.chunkProbeCache != nil {
+		if exists, ok := c.chunkProbeCache[digestHex]; ok {
+			return !exists
+		}
+	} else {
+		c.chunkProbeCache = make(map[string]bool)
+	}
+	exists := client.ChunkExists(digestHex)
+	c.chunkProbeCache[digestHex] = exists
+	return !exists
 }
 
 func (c *chunkState) commitChunk(shahash string, chunkLen int, inKnown, missingOnServer bool, client *pbscommon.PBSClient, digest [32]byte) error {
 	if inKnown && !missingOnServer {
-		missingOnServer = chunkMissingOnServer(client, shahash, inKnown)
+		missingOnServer = c.chunkMissingOnServer(client, shahash, inKnown)
 	}
 	if shouldUploadChunk(inKnown, missingOnServer) {
 		c.bindUploads(client)
@@ -147,7 +157,7 @@ func (c *chunkState) reuseChunks(chunks []pbscommon.PXARFastChunk, client *pbsco
 		var digest [32]byte
 		copy(digest[:], raw)
 		inKnown := c.knownChunks.Has(digest)
-		missingOnServer := chunkMissingOnServer(client, ch.DigestHex, inKnown)
+		missingOnServer := c.chunkMissingOnServer(client, ch.DigestHex, inKnown)
 		if shouldUploadChunk(inKnown, missingOnServer) {
 			return i18n.Ef("pbs.chunk_reuse_not_known", map[string]string{
 				"digest": ch.DigestHex[:min(12, len(ch.DigestHex))],
@@ -516,7 +526,7 @@ func backupReal(ctx context.Context, client *pbscommon.PBSClient, server models.
 	if stats != nil {
 		stats.SetStageID(stageFinalizeUploadMeta, nil)
 	}
-	if err := uploadWinMeta(client, backupdir); err != nil {
+	if err := uploadWinMeta(client, backupdir, stats); err != nil {
 		return nil, err
 	}
 	pxarIdxCount := 0
@@ -528,7 +538,7 @@ func backupReal(ctx context.Context, client *pbscommon.PBSClient, server models.
 			"count": formatCount(pxarIdxCount),
 		})
 	}
-	if err := uploadPxarIndex(client, indexRecorder.index); err != nil {
+	if err := uploadPxarIndex(client, indexRecorder.index, stats); err != nil {
 		return nil, i18n.Ewrap("pbs.pxar_index_upload", nil, err)
 	}
 	backupTime := client.Manifest.BackupTime

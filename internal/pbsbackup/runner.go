@@ -55,6 +55,19 @@ func (s *Stats) FastReuseActive() bool {
 	return s.fastReuseActive.Load()
 }
 
+func (s *Stats) addWarning(msg string) {
+	if s == nil || msg == "" {
+		return
+	}
+	if s.Warning == "" {
+		s.Warning = msg
+		return
+	}
+	if !strings.Contains(s.Warning, msg) {
+		s.Warning += "; " + msg
+	}
+}
+
 func (s *Stats) SetStage(msg string) {
 	if s == nil {
 		return
