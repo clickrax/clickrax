@@ -2,25 +2,16 @@ package pbsbackup
 
 import (
 	"pbs-win-backup/internal/filemeta"
-	"pbs-win-backup/internal/i18n"
 	"pbs-win-backup/internal/models"
 
 	pbscommon "pbscommon"
 )
 
-func uploadWinMeta(client *pbscommon.PBSClient, backupdir string, stats *Stats) error {
-	meta, err := filemeta.CollectTree(backupdir, true)
-	if err != nil {
-		return i18n.Ewrap("pbs.acl_collect", nil, err)
-	}
-	if len(meta.Files) == 0 {
-		return nil
-	}
-	data, err := filemeta.Marshal(meta)
-	if err != nil {
-		return err
-	}
-	return uploadBlobToPBS(client, stats, filemeta.PBSBlobName, data)
+// uploadWinMeta does not upload to PBS. WinMeta/ACL sidecars are local-only:
+// PBS blobs are capped at ~16 MiB and large trees break Finish manifest update.
+// NTFS metadata is already stored in the PXAR stream.
+func uploadWinMeta(_ *pbscommon.PBSClient, _ string, _ *Stats) error {
+	return nil
 }
 
 func loadSnapshotMeta(server models.PBSServer, secret string, ref SnapshotRef) (filemeta.Archive, error) {

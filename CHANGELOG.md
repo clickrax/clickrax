@@ -12,6 +12,13 @@
 
 Started in 2018: new **HP ProLiant DL380 Gen9** (~**$48k** at 2018 FX), StoreOnce 14 TB licensed / 40 TB disks — HP wanted almost the full server price to unlock capacity; controller swap instead. Then PBS; **PbsWinBackup** → **ClickRAX** after the vendor quote and because the Windows CLI client wasn't enough day to day.
 
+### [2.3.10] — 2026-07-13
+
+Fix PBS `Finish` on large backups:
+
+- Do not upload WinMeta / PXAR file index blobs to PBS (local-only; matches official PBS client flow)
+- Avoids `finish HTTP 400: unable to update manifest blob - Invalid string length` on multi-million-file backups
+
 ### [2.3.9] — 2026-07-13
 
 Fix PBS blob upload file names:
@@ -112,6 +119,13 @@ Scripts and experiments that grew into the client. Nothing was published.
 **2.3 — первый публичный релиз.** Версии 2.0–2.2 несколько лет крутились приватно на своих ПК и локальных PBS, потом выложили на GitHub.
 
 С 2018: новый **HP ProLiant DL380 Gen9** (~**$48k** по курсу 2018), StoreOnce 14 ТБ / 40 ТБ дисков — HP за разблокировку места выставили почти цену сервера, обошлись сменой контроллера. Потом PBS; **PbsWinBackup** → **ClickRAX** — и после такого ценника, и потому что консольного клиента на Windows мало.
+
+### [2.3.10] — 2026-07-13
+
+Исправление PBS `Finish` на больших бэкапах:
+
+- WinMeta и PXAR file index **не загружаются на PBS** (только локально; как у официального клиента)
+- Устраняет `finish HTTP 400: unable to update manifest blob - Invalid string length` на бэкапах с миллионами файлов
 
 ### [2.3.9] — 2026-07-13
 

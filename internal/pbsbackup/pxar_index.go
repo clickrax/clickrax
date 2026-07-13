@@ -88,15 +88,11 @@ func unmarshalPxarIndex(raw []byte) (pxarFileIndex, error) {
 	return idx, nil
 }
 
-func uploadPxarIndex(client *pbscommon.PBSClient, idx *pxarFileIndex, stats *Stats) error {
-	if idx == nil || len(idx.Files) == 0 {
-		return nil
-	}
-	data, err := marshalPxarIndex(idx)
-	if err != nil {
-		return err
-	}
-	return uploadBlobToPBS(client, stats, pxarIndexBlobName, data)
+// uploadPxarIndex does not upload to PBS. The file index is saved locally after Finish
+// (saveLocalPxarIndex) and is too large for PBS blob limits on big datasets.
+func uploadPxarIndex(_ *pbscommon.PBSClient, idx *pxarFileIndex, _ *Stats) error {
+	_ = idx
+	return nil
 }
 
 func loadPxarIndex(server models.PBSServer, secret string, ref SnapshotRef) (pxarFileIndex, bool, error) {

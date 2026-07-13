@@ -7,7 +7,7 @@ Windows backup client for **Proxmox Backup Server** — incrementals, VSS, resto
 
 Also **SMB** and **FTP/FTPS**: incremental ZIP with NTFS metadata. For home labs and small setups where PBS is already there.
 
-**Current version: 2.3.9** — [clickrax.exe](https://github.com/clickrax/clickrax/raw/main/release/v2.3/clickrax.exe) · [clickrax-cli.exe](https://github.com/clickrax/clickrax/raw/main/release/v2.3/clickrax-cli.exe) · [ZIP](https://github.com/clickrax/clickrax/raw/main/release/v2.3/clickrax-windows-amd64-portable.zip) · [installer](https://github.com/clickrax/clickrax/raw/main/release/v2.3/clickrax-amd64-installer.exe) · [папка release/v2.3](https://github.com/clickrax/clickrax/tree/main/release/v2.3)
+**Current version: 2.3.10** — [clickrax.exe](https://github.com/clickrax/clickrax/raw/main/release/v2.3/clickrax.exe) · [clickrax-cli.exe](https://github.com/clickrax/clickrax/raw/main/release/v2.3/clickrax-cli.exe) · [ZIP](https://github.com/clickrax/clickrax/raw/main/release/v2.3/clickrax-windows-amd64-portable.zip) · [installer](https://github.com/clickrax/clickrax/raw/main/release/v2.3/clickrax-amd64-installer.exe) · [папка release/v2.3](https://github.com/clickrax/clickrax/tree/main/release/v2.3)
 
 > **Downloading exe:** ready-made files are in **[release/v2.3/](https://github.com/clickrax/clickrax/tree/main/release/v2.3)** (links above).
 
