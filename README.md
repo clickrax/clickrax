@@ -7,7 +7,7 @@
 
 Помимо PBS поддерживаются **SMB** и **FTP/FTPS**: туда уходит ZIP-архив с сохранением ACL и атрибутов NTFS. Для домашних серверов и малых инфраструктур, где PBS уже стоит, а Windows-машины нужно подключить без лишней возни.
 
-**Текущая версия: 2.3.11** — [clickrax.exe](https://github.com/clickrax/clickrax/raw/main/release/v2.3/clickrax.exe) · [clickrax-cli.exe](https://github.com/clickrax/clickrax/raw/main/release/v2.3/clickrax-cli.exe) · [ZIP](https://github.com/clickrax/clickrax/raw/main/release/v2.3/clickrax-windows-amd64-portable.zip) · [установщик](https://github.com/clickrax/clickrax/raw/main/release/v2.3/clickrax-amd64-installer.exe) · [папка release/v2.3](https://github.com/clickrax/clickrax/tree/main/release/v2.3)
+**Текущая версия: 2.3.12** — [clickrax.exe](https://github.com/clickrax/clickrax/raw/main/release/v2.3/clickrax.exe) · [clickrax-cli.exe](https://github.com/clickrax/clickrax/raw/main/release/v2.3/clickrax-cli.exe) · [ZIP](https://github.com/clickrax/clickrax/raw/main/release/v2.3/clickrax-windows-amd64-portable.zip) · [установщик](https://github.com/clickrax/clickrax/raw/main/release/v2.3/clickrax-amd64-installer.exe) · [папка release/v2.3](https://github.com/clickrax/clickrax/tree/main/release/v2.3)
 
 > **Скачивание exe:** готовые файлы — в папке **[release/v2.3/](https://github.com/clickrax/clickrax/tree/main/release/v2.3)** (ссылки выше).
 

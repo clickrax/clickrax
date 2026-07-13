@@ -520,6 +520,14 @@ func (pbs *PBSClient) UploadManifest() error {
 	return pbs.UploadBlob("index.json.blob", manifestBin)
 }
 
+func (pbs *PBSClient) closeBackupSession() {
+	if pbs.backupConn != nil {
+		_ = pbs.backupConn.Close()
+		pbs.backupConn = nil
+	}
+	pbs.Client.CloseIdleConnections()
+}
+
 func (pbs *PBSClient) Finish() error {
 	req, err := http.NewRequest("POST", pbs.BaseURL+"/finish", nil)
 	if err != nil {
@@ -535,18 +543,16 @@ func (pbs *PBSClient) Finish() error {
 	if resp2.StatusCode != http.StatusOK {
 		return fmt.Errorf("finish HTTP %d: %s", resp2.StatusCode, readHTTPErrorBody(resp2))
 	}
-	pbs.backupConn = nil
+	// PBS commits the snapshot on /finish but keeps the backup worker task open
+	// until the upgraded HTTP/2 connection is closed by the client.
+	pbs.closeBackupSession()
 	return nil
 }
 
 // AbortBackupSession closes the active backup connection so PBS can drop an
 // unfinished snapshot (cancel, crash, or app exit without Finish).
 func (pbs *PBSClient) AbortBackupSession() {
-	if pbs.backupConn != nil {
-		_ = pbs.backupConn.Close()
-		pbs.backupConn = nil
-	}
-	pbs.Client.CloseIdleConnections()
+	pbs.closeBackupSession()
 }
 
 func (pbs *PBSClient) readerTLSConfig() *tls.Config {
