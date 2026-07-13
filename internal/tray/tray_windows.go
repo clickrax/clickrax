@@ -7,10 +7,15 @@ import (
 	_ "embed"
 	"sync"
 	"sync/atomic"
+	"syscall"
 	"time"
+	"unsafe"
 
 	"github.com/getlantern/systray"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
+	"golang.org/x/sys/windows"
+
+	"pbs-win-backup/internal/branding"
 )
 
 //go:embed icon.ico
@@ -136,17 +141,54 @@ func applyTooltip(text string) {
 	systray.SetTooltip(text)
 }
 
-// ShowWindow restores the main Wails window (async — safe from systray callbacks).
+// ShowWindow restores the main Wails window.
+// systray already invokes left-click handlers in a goroutine (see vendor systrayIconLeftClicked).
 func ShowWindow() {
 	if appCtx == nil {
+		showWindowNative()
 		return
 	}
-	ctx := appCtx
-	go func() {
-		runtime.WindowShow(ctx)
-		runtime.WindowUnminimise(ctx)
-		runtime.Show(ctx)
-	}()
+	runtime.WindowShow(appCtx)
+	showWindowNative()
+}
+
+var (
+	user32DLL          = windows.NewLazySystemDLL("user32.dll")
+	procEnumWindows    = user32DLL.NewProc("EnumWindows")
+	procShowWindowWin  = user32DLL.NewProc("ShowWindow")
+	procSetForeground  = user32DLL.NewProc("SetForegroundWindow")
+	procGetWindowTextW = user32DLL.NewProc("GetWindowTextW")
+)
+
+const swShow = 5
+
+type enumWindowData struct {
+	prefix string
+	found  windows.Handle
+}
+
+func showWindowNative() {
+	data := enumWindowData{prefix: branding.Title}
+	cb := syscall.NewCallback(func(hwnd uintptr, lParam uintptr) uintptr {
+		d := (*enumWindowData)(unsafe.Pointer(lParam))
+		var buf [256]uint16
+		n, _, _ := procGetWindowTextW.Call(hwnd, uintptr(unsafe.Pointer(&buf[0])), uintptr(len(buf)))
+		if n == 0 {
+			return 1
+		}
+		title := windows.UTF16ToString(buf[:])
+		if len(title) >= len(d.prefix) && title[:len(d.prefix)] == d.prefix {
+			d.found = windows.Handle(hwnd)
+			return 0
+		}
+		return 1
+	})
+	procEnumWindows.Call(cb, uintptr(unsafe.Pointer(&data)))
+	if data.found == 0 {
+		return
+	}
+	_, _, _ = procShowWindowWin.Call(uintptr(data.found), swShow)
+	_, _, _ = procSetForeground.Call(uintptr(data.found))
 }
 
 func scheduleTooltipUpdate() {

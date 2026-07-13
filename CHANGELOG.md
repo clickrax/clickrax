@@ -12,6 +12,13 @@
 
 Started in 2018: new **HP ProLiant DL380 Gen9** (~**$48k** at 2018 FX), StoreOnce 14 TB licensed / 40 TB disks — HP wanted almost the full server price to unlock capacity; controller swap instead. Then PBS; **PbsWinBackup** → **ClickRAX** after the vendor quote and because the Windows CLI client wasn't enough day to day.
 
+### [2.3.18] — 2026-07-13
+
+Tray restore fix:
+
+- Left-click / «Show window» restores the GUI again (removed race from double goroutine + wrong-thread `runtime.Show`)
+- Native Win32 fallback finds the hidden main window by title when Wails dispatch is delayed
+
 ### [2.3.17] — 2026-07-13
 
 Audit follow-up (remaining gaps):
@@ -187,6 +194,13 @@ Scripts and experiments that grew into the client. Nothing was published.
 **2.3 — первый публичный релиз.** Версии 2.0–2.2 несколько лет крутились приватно на своих ПК и локальных PBS, потом выложили на GitHub.
 
 С 2018: новый **HP ProLiant DL380 Gen9** (~**$48k** по курсу 2018), StoreOnce 14 ТБ / 40 ТБ дисков — HP за разблокировку места выставили почти цену сервера, обошлись сменой контроллера. Потом PBS; **PbsWinBackup** → **ClickRAX** — и после такого ценника, и потому что консольного клиента на Windows мало.
+
+### [2.3.18] — 2026-07-13
+
+Восстановление окна из трея:
+
+- ЛКМ / «Показать окно» снова разворачивает GUI (убрана гонка двойной goroutine + `runtime.Show` не с UI-потока)
+- Запасной Win32-путь находит скрытое окно по заголовку, если Wails dispatch задерживается
 
 ### [2.3.17] — 2026-07-13
 
