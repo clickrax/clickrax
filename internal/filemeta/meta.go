@@ -12,7 +12,10 @@ import (
 
 const Version = 1
 
-const PBSBlobName = "backup.winmeta.json"
+const PBSBlobName = "backup.winmeta.blob"
+
+// PBSBlobNameLegacy was used before v2.3.9; PBS rejects non-.blob extensions.
+const PBSBlobNameLegacy = "backup.winmeta.json"
 
 type Archive struct {
 	Version int                    `json:"version"`

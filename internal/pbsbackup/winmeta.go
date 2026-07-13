@@ -30,8 +30,8 @@ func loadSnapshotMeta(server models.PBSServer, secret string, ref SnapshotRef) (
 	}
 	defer cleanup()
 
-	raw, err := client.DownloadToBytes(filemeta.PBSBlobName)
-	if err != nil {
+	raw, err := downloadPBSBlob(client, filemeta.PBSBlobName, filemeta.PBSBlobNameLegacy)
+	if err != nil || len(raw) == 0 {
 		return filemeta.NewArchive(), nil
 	}
 	return filemeta.Unmarshal(raw)

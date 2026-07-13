@@ -19,7 +19,8 @@ import (
 	pbscommon "pbscommon"
 )
 
-const pxarIndexBlobName = "backup.pxar.index.json"
+const pxarIndexBlobName = "backup.pxar.index.blob"
+const pxarIndexBlobNameLegacy = "backup.pxar.index.json"
 const pxarIndexVersion = 1
 
 type pxarFilePos struct {
@@ -105,8 +106,8 @@ func loadPxarIndex(server models.PBSServer, secret string, ref SnapshotRef) (pxa
 	}
 	defer cleanup()
 
-	raw, err := client.DownloadToBytes(pxarIndexBlobName)
-	if err != nil {
+	raw, err := downloadPBSBlob(client, pxarIndexBlobName, pxarIndexBlobNameLegacy)
+	if err != nil || len(raw) == 0 {
 		return pxarFileIndex{}, false, nil
 	}
 	idx, err := unmarshalPxarIndex(raw)

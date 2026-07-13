@@ -2,6 +2,15 @@ package pbsbackup
 
 import "testing"
 
+func TestValidPBSBlobName(t *testing.T) {
+	if err := validPBSBlobName("backup.winmeta.blob"); err != nil {
+		t.Fatalf("expected valid: %v", err)
+	}
+	if err := validPBSBlobName("backup.winmeta.json"); err == nil {
+		t.Fatal("json suffix must be rejected")
+	}
+}
+
 func TestBlobFitsPBSLimit(t *testing.T) {
 	if !blobFitsPBSLimit(pbsMaxBlobPayloadBytes) {
 		t.Fatal("max payload should fit")
