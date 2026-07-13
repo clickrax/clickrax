@@ -105,6 +105,10 @@ func clearStale(path string) bool {
 	if err != nil || !lockContentsMatch(first, second) {
 		return false
 	}
+	pid2, ts2, err := parseLock(second)
+	if err != nil || !lockExpiredByAgeOrPID(pid2, ts2, time.Now()) {
+		return false
+	}
 	return os.Remove(path) == nil
 }
 
@@ -115,6 +119,9 @@ func lockExpiredByAgeOrPID(pid int, ts int64, now time.Time) bool {
 		return true
 	}
 	if ts > 0 && now.Sub(time.Unix(ts, 0)) > lockMaxAge {
+		return true
+	}
+	if ts <= 0 {
 		return true
 	}
 	return !isProcessAlive(pid)
@@ -151,7 +158,10 @@ func parseLock(data []byte) (pid int, ts int64, err error) {
 		return 0, 0, err
 	}
 	if len(parts) > 1 {
-		ts, _ = strconv.ParseInt(parts[1], 10, 64)
+		ts, err = strconv.ParseInt(parts[1], 10, 64)
+		if err != nil {
+			return 0, 0, err
+		}
 	}
 	return pid, ts, nil
 }

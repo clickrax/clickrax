@@ -366,7 +366,7 @@ func passphraseServiceFilePath(jobID string) (string, error) {
 	return filepath.Join(dir, "pass_"+jobID+".dpapi"), nil
 }
 
-func writeDPAPIPassphrase(jobID, passphrase string) error {
+var writeDPAPIPassphrase = func(jobID, passphrase string) error {
 	userPath, err := passphraseUserFilePath(jobID)
 	if err != nil {
 		return err
@@ -475,7 +475,8 @@ func MigratePassphrases(jobIDs []string) {
 		if err != nil {
 			continue
 		}
-		_ = writeDPAPIPassphrase(id, string(cred.CredentialBlob))
-		_ = cred.Delete()
+		if err := writeDPAPIPassphrase(id, string(cred.CredentialBlob)); err == nil {
+			_ = cred.Delete()
+		}
 	}
 }

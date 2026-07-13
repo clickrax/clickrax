@@ -18,6 +18,9 @@ import (
 
 var ownLockMu sync.Mutex
 var ownLockRefs int
+var lockHeartbeatStop chan struct{}
+
+const lockHeartbeatInterval = 30 * time.Minute
 
 type Lock struct {
 	path string
@@ -71,6 +74,10 @@ func tryRemoveStaleLock(path string) bool {
 	if err != nil || !lockContentsMatch(first, second) {
 		return false
 	}
+	info2, err := parseLockContent(second)
+	if err != nil || !lockExpired(info2, time.Now(), isProcessAlive) {
+		return false
+	}
 	return os.Remove(path) == nil
 }
 
@@ -82,6 +89,50 @@ func writeLockFile(f *os.File) error {
 		return err
 	}
 	return f.Close()
+}
+
+func touchLockFile(path string) {
+	info, err := readLockAt(path)
+	if err != nil || info.pid != os.Getpid() {
+		return
+	}
+	f, err := os.OpenFile(path, os.O_RDWR|os.O_TRUNC, 0o600)
+	if err != nil {
+		return
+	}
+	_ = writeLockFile(f)
+}
+
+func startLockHeartbeat(path string) {
+	ownLockMu.Lock()
+	if lockHeartbeatStop != nil {
+		ownLockMu.Unlock()
+		return
+	}
+	stop := make(chan struct{})
+	lockHeartbeatStop = stop
+	ownLockMu.Unlock()
+	go func() {
+		ticker := time.NewTicker(lockHeartbeatInterval)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-stop:
+				return
+			case <-ticker.C:
+				touchLockFile(path)
+			}
+		}
+	}()
+}
+
+func stopLockHeartbeat() {
+	ownLockMu.Lock()
+	if lockHeartbeatStop != nil {
+		close(lockHeartbeatStop)
+		lockHeartbeatStop = nil
+	}
+	ownLockMu.Unlock()
 }
 
 func isProcessAlive(pid int) bool {
@@ -170,6 +221,7 @@ func Acquire() (*Lock, error) {
 				_ = os.Remove(path)
 				return nil, fmt.Errorf("%s", i18n.L("lock.backup_write_failed", map[string]string{"err": werr.Error()}))
 			}
+			startLockHeartbeat(path)
 			return &Lock{path: path}, nil
 		}
 		if !os.IsExist(err) {
@@ -181,6 +233,7 @@ func Acquire() (*Lock, error) {
 			ownLockMu.Lock()
 			ownLockRefs++
 			ownLockMu.Unlock()
+			startLockHeartbeat(path)
 			return &Lock{path: path}, nil
 		}
 		if readErr != nil || lockExpired(info, time.Now(), isProcessAlive) {
@@ -211,6 +264,7 @@ func (l *Lock) Release() {
 	if err == nil && info.pid == os.Getpid() {
 		_ = os.Remove(l.path)
 	}
+	stopLockHeartbeat()
 }
 
 // ClearStaleFileLock removes a stale lock file at an arbitrary path (e.g. backup_queue.lock).

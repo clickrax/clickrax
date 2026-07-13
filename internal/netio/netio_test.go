@@ -8,6 +8,25 @@ import (
 	"time"
 )
 
+func TestWrapConn_ContextCancelClosesConn(t *testing.T) {
+	server, client := net.Pipe()
+	defer server.Close()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	wrapped := WrapConn(ctx, client, time.Minute)
+	cancel()
+
+	deadline := time.Now().Add(2 * time.Second)
+	for time.Now().Before(deadline) {
+		_, err := wrapped.Read(make([]byte, 1))
+		if err != nil {
+			return
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	t.Fatal("wrapped conn should close when context is cancelled")
+}
+
 func TestIdleConn_ReadDeadlineUnblocks(t *testing.T) {
 	server, client := net.Pipe()
 	defer server.Close()

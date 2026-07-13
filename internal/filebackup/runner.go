@@ -649,22 +649,6 @@ func writeZip(ctx context.Context, files []localFile, destZip string, skipAccess
 			_ = os.Remove(destZip)
 			return err
 		}
-		hdr, err := zip.FileInfoHeader(info)
-		if err != nil {
-			_ = zw.Close()
-			_ = f.Close()
-			_ = os.Remove(destZip)
-			return err
-		}
-		hdr.Name = item.rel
-		hdr.Method = zip.Deflate
-		w, err := zw.CreateHeader(hdr)
-		if err != nil {
-			_ = zw.Close()
-			_ = f.Close()
-			_ = os.Remove(destZip)
-			return err
-		}
 		src, err := os.Open(item.absPath)
 		if err != nil {
 			if skipAccess {
@@ -676,6 +660,24 @@ func writeZip(ctx context.Context, files []localFile, destZip string, skipAccess
 				}
 				continue
 			}
+			_ = zw.Close()
+			_ = f.Close()
+			_ = os.Remove(destZip)
+			return err
+		}
+		hdr, err := zip.FileInfoHeader(info)
+		if err != nil {
+			_ = src.Close()
+			_ = zw.Close()
+			_ = f.Close()
+			_ = os.Remove(destZip)
+			return err
+		}
+		hdr.Name = item.rel
+		hdr.Method = zip.Deflate
+		w, err := zw.CreateHeader(hdr)
+		if err != nil {
+			_ = src.Close()
 			_ = zw.Close()
 			_ = f.Close()
 			_ = os.Remove(destZip)

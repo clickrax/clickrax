@@ -31,7 +31,10 @@ func parseLockContent(data []byte) (lockInfo, error) {
 	}
 	var ts int64
 	if len(parts) > 1 {
-		ts, _ = strconv.ParseInt(parts[1], 10, 64)
+		ts, err = strconv.ParseInt(parts[1], 10, 64)
+		if err != nil {
+			return lockInfo{raw: data}, err
+		}
 	}
 	return lockInfo{pid: pid, timestamp: ts, raw: append([]byte(nil), data...)}, nil
 }
@@ -40,7 +43,11 @@ func lockExpired(info lockInfo, now time.Time, alive func(pid int) bool) bool {
 	if info.pid <= 0 {
 		return true
 	}
-	if info.timestamp > 0 && now.Sub(time.Unix(info.timestamp, 0)) > LockMaxAge {
+	ts := info.timestamp
+	if ts <= 0 {
+		ts = 0
+	}
+	if now.Sub(time.Unix(ts, 0)) > LockMaxAge {
 		return true
 	}
 	if alive(info.pid) {

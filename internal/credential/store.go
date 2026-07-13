@@ -177,8 +177,9 @@ func GetPassphrase(jobID string) (string, error) {
 	pass := string(cred.CredentialBlob)
 	if err := writeDPAPIPassphrase(jobID, pass); err != nil {
 		log.Printf("credential: lazy DPAPI passphrase migration failed for job %s: %v", jobID, err)
+	} else {
+		_ = cred.Delete()
 	}
-	_ = cred.Delete()
 	return pass, nil
 }
 

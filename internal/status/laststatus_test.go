@@ -10,6 +10,42 @@ import (
 	"pbs-win-backup/internal/paths"
 )
 
+func TestWriteLastStatusWarningUpdatesLastSuccess(t *testing.T) {
+	dir := t.TempDir()
+	oldData := os.Getenv("ProgramData")
+	t.Setenv("ProgramData", dir)
+	defer func() { _ = os.Setenv("ProgramData", oldData) }()
+
+	okAt := time.Date(2026, 7, 5, 12, 0, 0, 0, time.UTC)
+	if err := WriteLastStatus(models.LastStatus{
+		Hostname:    "host",
+		JobName:     "job1",
+		LastRun:     okAt.Format(time.RFC3339),
+		LastSuccess: okAt.Format(time.RFC3339),
+		Status:      "ok",
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	warnAt := time.Date(2026, 7, 7, 12, 0, 0, 0, time.UTC)
+	if err := WriteLastStatus(FromJobResult(models.JobRunResult{
+		JobName:    "job1",
+		Status:     "warning",
+		StartedAt:  warnAt,
+		FinishedAt: warnAt,
+	}, "host")); err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := ReadLastStatus()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.LastSuccess != warnAt.Format(time.RFC3339) {
+		t.Fatalf("warning should update last_success: got %q want %q", got.LastSuccess, warnAt.Format(time.RFC3339))
+	}
+}
+
 func TestWriteLastStatusPreservesLastSuccess(t *testing.T) {
 	dir := t.TempDir()
 	oldData := os.Getenv("ProgramData")

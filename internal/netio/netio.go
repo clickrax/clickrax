@@ -131,7 +131,14 @@ func WrapConn(ctx context.Context, conn net.Conn, idle time.Duration) net.Conn {
 	if idle <= 0 {
 		idle = DefaultIdleTimeout
 	}
-	return &idleConn{Conn: conn, ctx: ctx, idle: idle}
+	ic := &idleConn{Conn: conn, ctx: ctx, idle: idle}
+	if ctx != nil {
+		go func() {
+			<-ctx.Done()
+			_ = conn.Close()
+		}()
+	}
+	return ic
 }
 
 func (c *idleConn) Read(p []byte) (int, error) {

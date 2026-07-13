@@ -33,7 +33,7 @@ func WriteLastStatus(s models.LastStatus) error {
 	if err != nil {
 		return err
 	}
-	if s.Status != "ok" {
+	if s.Status != "ok" && s.Status != "warning" {
 		if prev, err := ReadLastStatus(); err == nil && prev.LastSuccess != "" {
 			s.LastSuccess = prev.LastSuccess
 		}

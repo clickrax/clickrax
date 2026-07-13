@@ -1,6 +1,7 @@
 package service
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -8,6 +9,8 @@ import (
 	"time"
 
 	"pbs-win-backup/internal/backuplock"
+	"pbs-win-backup/internal/datalock"
+	"pbs-win-backup/internal/eventlog"
 	"pbs-win-backup/internal/models"
 	"pbs-win-backup/internal/paths"
 	schedpkg "pbs-win-backup/internal/schedule"
@@ -53,15 +56,29 @@ func ReleaseMinuteClaimForJob(job models.BackupJob, now time.Time) {
 // RecordScheduleSuccess persists last successful schedule run for the job.
 func RecordScheduleSuccess(jobID string, now time.Time) {
 	key := schedpkg.MinuteKey(now)
-	st, err := loadScheduleState()
-	if err != nil {
-		return
+	if err := datalock.With("schedule_state", func() error {
+		st := scheduleState{LastRun: map[string]string{}}
+		p, err := scheduleStatePath()
+		if err != nil {
+			return err
+		}
+		if data, readErr := os.ReadFile(p); readErr == nil {
+			if err := json.Unmarshal(data, &st); err != nil {
+				return err
+			}
+		}
+		if st.LastRun == nil {
+			st.LastRun = map[string]string{}
+		}
+		st.LastRun[jobID] = key
+		data, err := json.MarshalIndent(st, "", "  ")
+		if err != nil {
+			return err
+		}
+		return paths.AtomicWriteSensitive(p, data, 0o600)
+	}); err != nil {
+		eventlog.Error("schedule_state save failed for " + jobID + ": " + err.Error())
 	}
-	if st.LastRun == nil {
-		st.LastRun = map[string]string{}
-	}
-	st.LastRun[jobID] = key
-	_ = saveScheduleState(st)
 }
 
 func releaseScheduleClaim(jobID, key string) {

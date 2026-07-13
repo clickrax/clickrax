@@ -12,6 +12,18 @@
 
 Started in 2018: new **HP ProLiant DL380 Gen9** (~**$48k** at 2018 FX), StoreOnce 14 TB licensed / 40 TB disks — HP wanted almost the full server price to unlock capacity; controller swap instead. Then PBS; **PbsWinBackup** → **ClickRAX** after the vendor quote and because the Windows CLI client wasn't enough day to day.
 
+### [2.3.16] — 2026-07-13
+
+Audit hotspot fixes (v2.3.15 follow-up):
+
+- Passphrase lazy migration and bulk migrate no longer delete WinCred until DPAPI write succeeds (prevents loss of encryption keys)
+- Zip archive: open source file before creating zip entry (no phantom 0-byte entries on access errors)
+- Backup lock heartbeat during long runs; stale locks with missing/invalid timestamp expire by age; compare-and-delete before removing stale locks (backuplock + datalock)
+- Schedule state: single read-modify-write under datalock; JSON parse errors no longer ignored
+- Last status: `warning` runs update `last_success` like `ok`
+- Legacy config migration uses durable atomic writes
+- Pxar restore aborts partial payload on error; history append errors logged; net connections close on context cancel
+
 ### [2.3.15] — 2026-07-13
 
 Tray while backup is running:
@@ -167,6 +179,18 @@ Scripts and experiments that grew into the client. Nothing was published.
 **2.3 — первый публичный релиз.** Версии 2.0–2.2 несколько лет крутились приватно на своих ПК и локальных PBS, потом выложили на GitHub.
 
 С 2018: новый **HP ProLiant DL380 Gen9** (~**$48k** по курсу 2018), StoreOnce 14 ТБ / 40 ТБ дисков — HP за разблокировку места выставили почти цену сервера, обошлись сменой контроллера. Потом PBS; **PbsWinBackup** → **ClickRAX** — и после такого ценника, и потому что консольного клиента на Windows мало.
+
+### [2.3.16] — 2026-07-13
+
+Исправления по аудиту (продолжение 2.3.15):
+
+- Ленивая миграция и массовая миграция passphrase не удаляют WinCred до успешной записи DPAPI (защита ключей шифрования)
+- Zip: открытие файла до создания записи в архиве (нет фантомных 0-байтных записей при ошибках доступа)
+- Heartbeat lock-файла при длинном бэкапе; устаревшие lock с битым timestamp истекают по возрасту; compare-and-delete (backuplock + datalock)
+- Состояние расписания: один RMW под datalock; ошибки JSON больше не игнорируются
+- Last status: `warning` обновляет `last_success` как `ok`
+- Миграция legacy-конфига через durable atomic write
+- Pxar restore сбрасывает частичный payload при ошибке; ошибки history в лог; закрытие сетевых соединений при отмене контекста
 
 ### [2.3.15] — 2026-07-13
 

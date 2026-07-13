@@ -1,11 +1,15 @@
 package filebackup
 
 import (
+	"archive/zip"
 	"context"
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
+
+	"golang.org/x/sys/windows"
 
 	"pbs-win-backup/internal/fileindex"
 	"pbs-win-backup/internal/models"
@@ -96,6 +100,68 @@ func TestRun_SkipAccessErrors_SingleLockedFile_Succeeds(t *testing.T) {
 	}
 	if after.BaseFull == "" {
 		t.Fatal("index should advance after successful skip")
+	}
+}
+
+func TestWriteZip_StatOkOpenFails_NoPhantomZipEntry(t *testing.T) {
+	if runtime.GOOS != "windows" {
+		t.Skip("requires Windows exclusive file lock")
+	}
+	dir := t.TempDir()
+	goodPath := filepath.Join(dir, "good.txt")
+	if err := os.WriteFile(goodPath, []byte("ok"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	blockedPath := filepath.Join(dir, "blocked.txt")
+	if err := os.WriteFile(blockedPath, []byte("x"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	unlock := lockPathExclusive(t, blockedPath)
+	defer unlock()
+
+	files := []localFile{
+		{absPath: goodPath, rel: "good.txt", catalog: "good.txt"},
+		{absPath: blockedPath, rel: "blocked.txt", catalog: "blocked.txt"},
+	}
+	destZip := filepath.Join(dir, "out.zip")
+	var stats Stats
+	skipped := map[string]struct{}{}
+
+	if err := writeZip(context.Background(), files, destZip, true, &stats, skipped, nil); err != nil {
+		t.Fatalf("writeZip skipAccess: %v", err)
+	}
+	if stats.FilesSkipped.Load() != 1 {
+		t.Fatalf("FilesSkipped = %d, want 1", stats.FilesSkipped.Load())
+	}
+
+	zr, err := zip.OpenReader(destZip)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer zr.Close()
+	if len(zr.File) != 1 {
+		t.Fatalf("zip entries = %d, want 1 (no phantom blocked entry)", len(zr.File))
+	}
+	if zr.File[0].Name != "good.txt" {
+		t.Fatalf("unexpected entry %q", zr.File[0].Name)
+	}
+	if _, ok := skipped["blocked.txt"]; !ok {
+		t.Fatal("blocked file should be in intentionallySkipped")
+	}
+}
+
+func lockPathExclusive(t *testing.T, path string) func() {
+	t.Helper()
+	path16, err := windows.UTF16PtrFromString(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	h, err := windows.CreateFile(path16, windows.GENERIC_READ|windows.GENERIC_WRITE, 0, nil, windows.OPEN_EXISTING, windows.FILE_ATTRIBUTE_NORMAL, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return func() {
+		_ = windows.CloseHandle(h)
 	}
 }
 

@@ -60,8 +60,8 @@ func TestSMBUpload_StalledPeer_TimesOutAndCancels(t *testing.T) {
 		smbShareRemove = oldRemove
 	})
 
-	dialFunc = func(context.Context, models.BackupDestination, string) (*smb2.Share, *smb2.Session, net.Conn, error) {
-		return nil, nil, clientConn, nil
+	dialFunc = func(ctx context.Context, dest models.BackupDestination, password string) (*smb2.Share, *smb2.Session, net.Conn, error) {
+		return nil, nil, wrapConnForDial(ctx, clientConn), nil
 	}
 	mkdirAll = func(*smb2.Share, string) error { return nil }
 	smbShareRemove = func(*smb2.Share, string) error { return nil }

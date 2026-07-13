@@ -2,7 +2,6 @@ package paths
 
 import (
 	"encoding/json"
-	"io"
 	"os"
 	"path/filepath"
 	"sync"
@@ -83,22 +82,15 @@ func copyFile(src, dst string, d os.DirEntry) error {
 	if err != nil {
 		return err
 	}
+	data, err := os.ReadFile(src)
+	if err != nil {
+		return err
+	}
 	if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
 		return err
 	}
-	in, err := os.Open(src)
-	if err != nil {
-		return err
+	if _, err := os.Stat(dst); err == nil {
+		return nil
 	}
-	defer in.Close()
-	out, err := os.OpenFile(dst, os.O_CREATE|os.O_WRONLY|os.O_EXCL, info.Mode().Perm())
-	if err != nil {
-		if os.IsExist(err) {
-			return nil
-		}
-		return err
-	}
-	defer out.Close()
-	_, err = io.Copy(out, in)
-	return err
+	return AtomicWrite(dst, data, info.Mode().Perm())
 }

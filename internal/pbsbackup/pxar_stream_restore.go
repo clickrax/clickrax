@@ -583,6 +583,7 @@ func streamRestorePXARTargetsSequential(
 	onFileProgress RestoreFolderProgress,
 ) (int, error) {
 	parser := newPxarStreamParser(ctx, targets, meta, overwriteMode, forceOverwrite, onFileProgress)
+	defer func() { _ = parser.abortPayload() }()
 	parser.recordIndex = true
 	parser.index = newPxarFileIndex()
 	if onFileProgress != nil {

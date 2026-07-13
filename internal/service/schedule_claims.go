@@ -51,12 +51,27 @@ func ClearScheduleClaims(jobID string) {
 	for _, p := range matches {
 		_ = os.Remove(p)
 	}
-	st, err := loadScheduleState()
-	if err != nil {
-		return
-	}
-	delete(st.LastRun, jobID)
-	_ = saveScheduleState(st)
+	_ = datalock.With("schedule_state", func() error {
+		st := scheduleState{LastRun: map[string]string{}}
+		p, err := scheduleStatePath()
+		if err != nil {
+			return err
+		}
+		if data, readErr := os.ReadFile(p); readErr == nil {
+			if err := json.Unmarshal(data, &st); err != nil {
+				return err
+			}
+		}
+		if st.LastRun == nil {
+			st.LastRun = map[string]string{}
+		}
+		delete(st.LastRun, jobID)
+		data, err := json.MarshalIndent(st, "", "  ")
+		if err != nil {
+			return err
+		}
+		return paths.AtomicWriteSensitive(p, data, 0o600)
+	})
 }
 
 // NudgeScheduler signals a running service to re-check schedule without restart.
@@ -104,7 +119,9 @@ func recordSlotSuccess(job models.BackupJob, now time.Time) {
 			return err
 		}
 		if data, readErr := os.ReadFile(p); readErr == nil {
-			_ = json.Unmarshal(data, &st)
+			if err := json.Unmarshal(data, &st); err != nil {
+				return err
+			}
 		}
 		if st.LastRun == nil {
 			st.LastRun = map[string]string{}

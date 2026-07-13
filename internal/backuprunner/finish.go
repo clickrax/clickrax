@@ -30,7 +30,9 @@ func FinishCommon(in FinishInput) FinishOutput {
 	job := in.Job
 	settings := in.Settings
 
-	_ = history.Append(in.Result)
+	if err := history.Append(in.Result); err != nil {
+		eventlog.Error("не удалось записать history: " + err.Error())
+	}
 	if err := status.WriteLastStatus(status.FromJobResult(in.Result, backup.Hostname())); err != nil {
 		eventlog.Error("не удалось записать last_status: " + err.Error())
 	}

@@ -36,3 +36,67 @@ func TestSetSecret_WincredFails_NoPersistedSecret(t *testing.T) {
 		t.Fatal("HasSecret should be false when neither store succeeded")
 	}
 }
+
+func TestGetPassphrase_DPAPIWriteFails_KeepsWincred(t *testing.T) {
+	dir := t.TempDir()
+	old := os.Getenv("ProgramData")
+	t.Setenv("ProgramData", dir)
+	defer func() { _ = os.Setenv("ProgramData", old) }()
+
+	jobID := uuid.NewString()
+	pass := "encryption-passphrase"
+	cred := wincred.NewGenericCredential(passphraseTarget(jobID))
+	cred.CredentialBlob = []byte(pass)
+	cred.Persist = wincred.PersistSession
+	if err := writeGenericCredential(cred); err != nil {
+		t.Fatal(err)
+	}
+
+	oldWrite := writeDPAPIPassphrase
+	t.Cleanup(func() { writeDPAPIPassphrase = oldWrite })
+	writeDPAPIPassphrase = func(string, string) error {
+		return errors.New("dpapi write failed")
+	}
+
+	got, err := GetPassphrase(jobID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got != pass {
+		t.Fatalf("got %q want %q", got, pass)
+	}
+	if _, err := wincred.GetGenericCredential(passphraseTarget(jobID)); err != nil {
+		t.Fatal("wincred passphrase should remain when DPAPI migration fails")
+	}
+}
+
+func TestMigratePassphrases_DPAPIWriteFails_KeepsWincred(t *testing.T) {
+	dir := t.TempDir()
+	old := os.Getenv("ProgramData")
+	t.Setenv("ProgramData", dir)
+	defer func() { _ = os.Setenv("ProgramData", old) }()
+
+	jobID := uuid.NewString()
+	pass := "migrate-passphrase"
+	cred := wincred.NewGenericCredential(passphraseTarget(jobID))
+	cred.CredentialBlob = []byte(pass)
+	cred.Persist = wincred.PersistSession
+	if err := writeGenericCredential(cred); err != nil {
+		t.Fatal(err)
+	}
+
+	oldWrite := writeDPAPIPassphrase
+	t.Cleanup(func() { writeDPAPIPassphrase = oldWrite })
+	writeDPAPIPassphrase = func(string, string) error {
+		return errors.New("dpapi write failed")
+	}
+
+	MigratePassphrases([]string{jobID})
+
+	if _, err := readDPAPIPassphrase(jobID); err == nil {
+		t.Fatal("DPAPI file should not exist when write failed")
+	}
+	if got, err := wincred.GetGenericCredential(passphraseTarget(jobID)); err != nil || string(got.CredentialBlob) != pass {
+		t.Fatal("wincred passphrase should remain when migration write fails")
+	}
+}
