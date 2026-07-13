@@ -113,7 +113,15 @@ func Execute(in ExecuteInput) ExecuteOutput {
 			if in.EmitProgress != nil && in.OnRetryMessage != nil {
 				in.EmitProgress(in.OnRetryMessage(attempt, maxRetries, runErr, delay))
 			}
-			time.Sleep(delay)
+			if in.Ctx != nil {
+				select {
+				case <-time.After(delay):
+				case <-in.Ctx.Done():
+					return ExecuteOutput{Result: result, Err: in.Ctx.Err()}
+				}
+			} else {
+				time.Sleep(delay)
+			}
 		}
 		result, runErr = in.Engine.Run(in.Ctx, backup.RunParams{
 			Job:               in.Job,

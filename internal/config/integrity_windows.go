@@ -7,7 +7,6 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -88,12 +87,6 @@ func ensureConfigSignature(configPath string, data []byte) error {
 		return err
 	}
 	if err := verifyConfigBytes(data, sigPath); err != nil {
-		if json.Valid(data) {
-			if werr := writeConfigSignature(configPath, data); werr != nil {
-				return nil
-			}
-			return nil
-		}
 		return err
 	}
 	return nil

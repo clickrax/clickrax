@@ -74,6 +74,7 @@ func SetSecret(serverID, secret string) error {
 		)
 	}
 	if err := writeDPAPISecret(serverID, secret); err != nil {
+		deleteWincredSecret(serverID)
 		return i18nconfig.FromConfig().Ewrap("cred.save_secret_service", nil, err)
 	}
 	deleteWincredSecret(serverID)
@@ -100,6 +101,8 @@ func GetSecret(serverID string) (string, error) {
 	}
 	if err := writeDPAPISecret(serverID, secret); err != nil {
 		log.Printf("credential: lazy DPAPI migration failed for server %s: %v", serverID, err)
+	} else {
+		deleteWincredSecret(serverID)
 	}
 	return secret, nil
 }
@@ -221,6 +224,8 @@ func GetSMTPPassword() (string, error) {
 	}
 	if err := writeDPAPISMTPPassword(password); err != nil {
 		log.Printf("credential: lazy DPAPI SMTP migration failed: %v", err)
+	} else {
+		deleteWincredSMTP()
 	}
 	return password, nil
 }

@@ -43,6 +43,7 @@ type chunkState struct {
 	bytesNew           *atomic.Int64
 	bytesReused        *atomic.Int64
 	knownChunks        *knownChunks
+	chunkExist         *chunkExistCache
 	limiter            *bandwidthLimiter
 	uploads            *chunkUploadPipeline
 }
@@ -60,6 +61,7 @@ func (c *chunkState) init(ctx context.Context, stats *Stats, known *knownChunks,
 	c.bytesNew = &stats.BytesNew
 	c.bytesReused = &stats.BytesReused
 	c.knownChunks = known
+	c.chunkExist = newChunkExistCache()
 	c.limiter = limiter
 	c.uploads = nil
 }
@@ -83,7 +85,11 @@ func (c *chunkState) cancelled() bool {
 }
 
 func (c *chunkState) commitChunk(shahash string, chunkLen int, inKnown bool, client *pbscommon.PBSClient, digest [32]byte) error {
-	if !inKnown {
+	upload, err := c.chunkUploadNeeded(shahash, inKnown, client, len(c.currentChunk) > 0)
+	if err != nil {
+		return err
+	}
+	if upload {
 		c.bindUploads(client)
 		c.newchunk.Add(1)
 		if err := c.uploads.upload(c.wrid, shahash, c.currentChunk); err != nil {

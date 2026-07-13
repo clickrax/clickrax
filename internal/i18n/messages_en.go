@@ -111,6 +111,29 @@ var en = map[string]string{
 	"backup.toast_warning":         "✓ Backup completed with warnings",
 	"backup.toast_cancelled":       "Backup cancelled",
 	"backup.running_elsewhere":     "Backup running (service or another session)…",
+
+	"tray.show": "Show window",
+	"tray.quit": "Exit",
+
+	"tray.nav_dashboard":   "Overview",
+	"tray.nav_servers":     "Servers",
+	"tray.nav_jobs":        "Jobs",
+	"tray.nav_progress":    "Execution",
+	"tray.nav_restore":     "Restore",
+	"tray.nav_logs":        "Journal",
+	"tray.nav_settings":    "Settings",
+	"tray.nav_diagnostics": "Diagnostics",
+
+	"tray.tooltip_idle":     "ClickRAX — idle",
+	"tray.tooltip_running":  "{{job}}: {{detail}} — {{pct}}%",
+	"tray.tooltip_stopping": "{{job}}: stopping…",
+	"tray.phase_preparing":  "preparing",
+	"tray.phase_analyzing":  "analyzing",
+	"tray.phase_vss":        "VSS snapshot",
+	"tray.phase_transfer":   "transfer",
+	"tray.phase_finalizing": "finalizing",
+	"tray.phase_verify":     "verify",
+	"tray.phase_active":     "running",
 	"backup.stopping":              "Stopping backup…",
 	"backup.no_successful":         "no successful backups yet — run a backup first",
 	"backup.last_status":           "Last backup: {{status}}",
@@ -379,6 +402,7 @@ var en = map[string]string{
 
 	// pbs.err.*
 	"pbs.chunk_digest_invalid":   "invalid chunk digest {{digest}}",
+	"pbs.chunk_missing_on_server": "chunk {{digest}}… missing on PBS (run full backup after server prune)",
 	"pbs.index_load_prev_err":    "loading previous index: {{err}}",
 	"pbs.fast_inc_err":           "fast incremental: {{err}}",
 	"pbs.source_inaccessible":    "source inaccessible {{path}}: {{err}}",

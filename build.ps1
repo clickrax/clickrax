@@ -106,6 +106,9 @@ if (-not (Test-Path $logoSrc)) {
     throw "Logo not found: $logoSrc"
 }
 Invoke-Step "Generate app icon" { python $iconScript }
+$iconDst = Join-Path $PSScriptRoot "internal\tray\icon.ico"
+New-Item -ItemType Directory -Force -Path (Split-Path $iconDst -Parent) | Out-Null
+Copy-Item (Join-Path $PSScriptRoot "build\windows\icon.ico") $iconDst -Force
 Get-ChildItem $PSScriptRoot -Filter "rsrc_windows_*.syso" -ErrorAction SilentlyContinue | Remove-Item -Force
 Get-ChildItem (Join-Path $PSScriptRoot "build\windows") -Filter "rsrc_windows_*.syso" -ErrorAction SilentlyContinue | Remove-Item -Force
 

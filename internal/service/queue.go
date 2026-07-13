@@ -33,7 +33,7 @@ func (h *handler) submitScheduledBackup(job models.BackupJob, now time.Time) err
 		},
 		Launch: h.startQueuedBackup,
 		FindJob: func(jobID string) (*models.BackupJob, error) {
-			cfg, err := config.Load()
+			cfg, err := config.LoadResilient()
 			if err != nil {
 				return nil, err
 			}
@@ -90,7 +90,7 @@ func (h *handler) launchQueuedBackup(item backupqueue.Item) error {
 }
 
 func (h *handler) startQueuedBackup(item backupqueue.Item) error {
-	cfg, err := config.Load()
+	cfg, err := config.LoadResilient()
 	if err != nil {
 		ReleaseLaunchFailure(item, models.BackupJob{ID: item.JobID}, item.ScheduledAt)
 		return backupqueue.PermanentStartError(err)

@@ -35,7 +35,7 @@ func FinishCommon(in FinishInput) FinishOutput {
 		eventlog.Error("не удалось записать last_status: " + err.Error())
 	}
 	if in.ReloadFromDisk {
-		if cfg, err := config.Load(); err == nil {
+		if cfg, err := config.LoadResilient(); err == nil {
 			settings = cfg.Settings
 			for i := range cfg.Jobs {
 				if cfg.Jobs[i].ID == job.ID {

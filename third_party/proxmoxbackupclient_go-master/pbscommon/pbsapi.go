@@ -236,6 +236,7 @@ func (pbs *PBSClient) AssignFixedChunks(writerid uint64, digests []string, offse
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json; charset=UTF-8")
+	req.Header.Add("Authorization", fmt.Sprintf("PBSAPIToken=%s:%s", pbs.AuthID, pbs.Secret))
 	resp2, err := pbs.Client.Do(req)
 	if err != nil {
 		fmt.Println("Error making request:", err)
@@ -632,22 +633,35 @@ func (pbs *PBSClient) Connect(reader bool, backuptype string) {
 				}
 
 				q.Add("backup-id", pbs.Manifest.BackupID)
-				fmt.Println(q.Encode())
 				//q.Add("debug", "1")
+				upgradeDeadline := time.Now().Add(5 * time.Minute)
+				_ = conn.SetDeadline(upgradeDeadline)
+				defer func() { _ = conn.SetDeadline(time.Time{}) }()
 				if !reader {
-					conn.Write([]byte("GET /api2/json/backup?" + q.Encode() + " HTTP/1.1\r\n"))
+					if _, err := conn.Write([]byte("GET /api2/json/backup?" + q.Encode() + " HTTP/1.1\r\n")); err != nil {
+						return nil, err
+					}
 				} else {
-					conn.Write([]byte("GET /api2/json/reader?" + q.Encode() + " HTTP/1.1\r\n"))
+					if _, err := conn.Write([]byte("GET /api2/json/reader?" + q.Encode() + " HTTP/1.1\r\n")); err != nil {
+						return nil, err
+					}
 				}
 
-				conn.Write([]byte("Authorization: " + fmt.Sprintf("PBSAPIToken=%s:%s", pbs.AuthID, pbs.Secret) + "\r\n"))
-				if !reader {
-					conn.Write([]byte("Upgrade: proxmox-backup-protocol-v1\r\n"))
-				} else {
-					conn.Write([]byte("Upgrade: proxmox-backup-reader-protocol-v1\r\n"))
+				if _, err := conn.Write([]byte("Authorization: " + fmt.Sprintf("PBSAPIToken=%s:%s", pbs.AuthID, pbs.Secret) + "\r\n")); err != nil {
+					return nil, err
 				}
-				conn.Write([]byte("Connection: Upgrade\r\n\r\n"))
-				fmt.Printf("Reading response to upgrade...\n")
+				if !reader {
+					if _, err := conn.Write([]byte("Upgrade: proxmox-backup-protocol-v1\r\n")); err != nil {
+						return nil, err
+					}
+				} else {
+					if _, err := conn.Write([]byte("Upgrade: proxmox-backup-reader-protocol-v1\r\n")); err != nil {
+						return nil, err
+					}
+				}
+				if _, err := conn.Write([]byte("Connection: Upgrade\r\n\r\n")); err != nil {
+					return nil, err
+				}
 				buf := make([]byte, 0)
 				for !strings.HasSuffix(string(buf), "\r\n\r\n") && !strings.HasSuffix(string(buf), "\n\n") {
 					//fmt.Println(buf)

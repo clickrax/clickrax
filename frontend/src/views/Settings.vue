@@ -28,6 +28,7 @@ const { t } = useI18n()
 
 const form = reactive({
   language: 'ru',
+  minimize_to_tray: true,
   bandwidth_mbps: 0,
   chunk_workers: 0,
   network_timeout_sec: 120,
@@ -119,6 +120,7 @@ async function runSvcAction(fn: () => Promise<models.ServiceActionResult>) {
 function buildSettings() {
   return models.AppSettings.createFrom({
     language: form.language,
+    minimize_to_tray: form.minimize_to_tray,
     bandwidth_mbps: form.bandwidth_mbps,
     chunk_workers: form.chunk_workers,
     network_timeout_sec: form.network_timeout_sec,
@@ -142,6 +144,7 @@ function buildSettings() {
 onMounted(async () => {
   const s = await GetSettings()
   form.language = s.language
+  form.minimize_to_tray = s.minimize_to_tray !== false
   setAppLocale(s.language)
   form.bandwidth_mbps = s.bandwidth_mbps
   form.chunk_workers = s.chunk_workers || 0
@@ -327,6 +330,10 @@ async function importCfg() {
         <option value="ru">{{ t('settings_ext.language_ru') }}</option>
         <option value="en">{{ t('settings_ext.language_en') }}</option>
       </select>
+    </label>
+    <label class="toggle">
+      <input type="checkbox" v-model="form.minimize_to_tray" />
+      <span>{{ t('settings.minimize_to_tray') }}</span>
     </label>
     <label>{{ t('settings.bandwidth') }}
       <input v-model.number="form.bandwidth_mbps" type="number" min="0" />

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"strings"
@@ -51,6 +52,7 @@ func SendWebhook(url string, result models.JobRunResult) error {
 	if resp.StatusCode >= 300 {
 		return fmt.Errorf("webhook HTTP %d", resp.StatusCode)
 	}
+	_, _ = io.Copy(io.Discard, resp.Body)
 	return nil
 }
 

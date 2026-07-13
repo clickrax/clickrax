@@ -111,6 +111,29 @@ var ru = map[string]string{
 	"backup.toast_warning":         "✓ Бэкап завершён с предупреждениями",
 	"backup.toast_cancelled":       "Бэкап отменён",
 	"backup.running_elsewhere":     "Бэкап выполняется (служба или другая сессия)…",
+
+	"tray.show": "Показать окно",
+	"tray.quit": "Выход",
+
+	"tray.nav_dashboard":   "Сводка",
+	"tray.nav_servers":     "Серверы",
+	"tray.nav_jobs":        "Задания",
+	"tray.nav_progress":    "Выполнение",
+	"tray.nav_restore":     "Восстановление",
+	"tray.nav_logs":        "Журнал",
+	"tray.nav_settings":    "Настройки",
+	"tray.nav_diagnostics": "Диагностика",
+
+	"tray.tooltip_idle":     "ClickRAX — в ожидании",
+	"tray.tooltip_running":  "{{job}}: {{detail}} — {{pct}}%",
+	"tray.tooltip_stopping": "{{job}}: остановка…",
+	"tray.phase_preparing":  "подготовка",
+	"tray.phase_analyzing":  "анализ",
+	"tray.phase_vss":        "снимок VSS",
+	"tray.phase_transfer":   "передача",
+	"tray.phase_finalizing": "завершение",
+	"tray.phase_verify":     "проверка",
+	"tray.phase_active":     "выполняется",
 	"backup.stopping":              "Остановка бэкапа…",
 	"backup.no_successful":         "успешных бэкапов ещё не было — сначала выполните бэкап",
 	"backup.last_status":           "Последний бэкап: {{status}}",
@@ -379,6 +402,7 @@ var ru = map[string]string{
 
 	// pbs.err.*
 	"pbs.chunk_digest_invalid":   "неверный digest chunk {{digest}}",
+	"pbs.chunk_missing_on_server": "chunk {{digest}}… отсутствует на PBS (запустите полный бэкап после prune на сервере)",
 	"pbs.index_load_prev_err":    "загрузка предыдущего индекса: {{err}}",
 	"pbs.fast_inc_err":           "быстрый инкремент: {{err}}",
 	"pbs.source_inaccessible":    "источник недоступен {{path}}: {{err}}",

@@ -33,6 +33,7 @@ import (
 	"pbs-win-backup/internal/restore"
 	"pbs-win-backup/internal/schedule"
 	"pbs-win-backup/internal/service"
+	"pbs-win-backup/internal/tray"
 	"pbs-win-backup/internal/updates"
 	"pbs-win-backup/internal/version"
 	"pbs-win-backup/internal/winutil"
@@ -55,6 +56,7 @@ type App struct {
 	lastProgress        models.ProgressEvent
 	remoteStoppingJobID string
 	remoteStoppingSince time.Time
+	forceQuit           bool
 }
 
 func NewApp() *App {
@@ -147,6 +149,7 @@ func (a *App) emitProgress(ev models.ProgressEvent) {
 	a.lastProgress = ev
 	a.mu.Unlock()
 	runtime.EventsEmit(a.ctx, "progress", ev)
+	a.updateTrayTooltip()
 }
 
 func friendlyBackupError(b *i18n.Bundle, err error) string {
@@ -173,7 +176,12 @@ func (a *App) startup(ctx context.Context) {
 		}
 	}
 	if cfg == nil {
-		cfg = config.DefaultConfig()
+		path, perr := paths.ConfigPath()
+		if perr == nil && paths.ConfigFileHasUserData(path) {
+			cfg = &models.Config{Version: 1}
+		} else {
+			cfg = config.DefaultConfig()
+		}
 	}
 	a.store = appstore.New(cfg)
 	pbsbackup.SetChunkWorkersSetting(cfg.Settings.ChunkWorkers)
@@ -506,7 +514,7 @@ func (a *App) ListVolumeFolders(volume string) ([]models.VolumeFolder, error) {
 }
 
 func (a *App) startBackup(jobID string, forceFull bool) error {
-	cfg, err := config.Load()
+	cfg, err := config.LoadResilient()
 	if err != nil {
 		return err
 	}
@@ -536,7 +544,7 @@ func (a *App) runJob(job models.BackupJob, forceFull bool) error {
 }
 
 func (a *App) runJobAt(job models.BackupJob, forceFull bool, scheduledAt time.Time) error {
-	cfg, err := config.Load()
+	cfg, err := config.LoadResilient()
 	if err != nil {
 		return err
 	}
@@ -597,12 +605,14 @@ func (a *App) ClearBackupLock() models.ConnectionTestResult {
 
 func (a *App) StopBackup(jobID string) {
 	jobID = strings.TrimSpace(jobID)
-	if jobID == "" {
-		jobID = a.engine.CurrentJobID()
-	}
-	if jobID != "" && a.engine.IsRunning() && a.engine.CurrentJobID() == jobID {
+	if a.engine.IsRunning() {
+		current := a.engine.CurrentJobID()
 		a.engine.Stop()
-		a.emitStoppingProgress(jobID)
+		if current != "" {
+			a.emitStoppingProgress(current)
+		} else if jobID != "" {
+			a.emitStoppingProgress(jobID)
+		}
 		return
 	}
 	if jobID == "" {
@@ -665,6 +675,7 @@ func (a *App) emitStoppingProgress(jobID string) {
 
 // shutdown stops an active backup and waits for PBS session cleanup before exit.
 func (a *App) shutdown(ctx context.Context) {
+	tray.Shutdown()
 	if a.engine == nil {
 		return
 	}
@@ -1322,7 +1333,7 @@ func (a *App) runScheduledJobs(now time.Time) {
 		}
 		serviceStoppedWarnMu.Unlock()
 	}
-	cfg, err := config.Load()
+	cfg, err := config.LoadResilient()
 	if err != nil {
 		eventlog.Error("расписание: config: " + err.Error())
 		return
@@ -1517,7 +1528,7 @@ func (a *App) ImportConfigDialog() (string, error) {
 	if err := config.Save(&imported); err != nil {
 		return "", err
 	}
-	reloaded, err := config.Load()
+	reloaded, err := config.LoadResilient()
 	if err != nil {
 		return "", err
 	}

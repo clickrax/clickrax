@@ -5,11 +5,14 @@ package config
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 
+	"pbs-win-backup/internal/i18n"
+	"pbs-win-backup/internal/locale"
 	"pbs-win-backup/internal/models"
 	"pbs-win-backup/internal/paths"
 )
@@ -58,6 +61,33 @@ func bestQuarantineScore(configPath string) int {
 		}
 	}
 	return best
+}
+
+func validateRecoveredConfigData(data []byte) error {
+	var cfg models.Config
+	if err := json.Unmarshal(data, &cfg); err != nil {
+		return err
+	}
+	b := i18n.New(locale.Normalize(cfg.Settings.Language))
+	if raw := strings.TrimSpace(cfg.Settings.WebhookURL); raw != "" {
+		u, err := url.Parse(raw)
+		if err != nil || !strings.EqualFold(u.Scheme, "https") || u.Host == "" {
+			return fmt.Errorf("invalid webhook URL in quarantine config")
+		}
+	}
+	for _, dest := range cfg.Destinations {
+		if dest.IsPBS() {
+			if err := models.ValidatePBSURL(b, dest.URL); err != nil {
+				return err
+			}
+		}
+	}
+	for _, srv := range cfg.Servers {
+		if err := models.ValidatePBSURL(b, srv.URL); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // RecoverFromQuarantine restores the richest valid config.json.corrupt-* backup.
@@ -111,6 +141,9 @@ func RecoverFromQuarantine(configPath string) (bool, error) {
 	data, err := os.ReadFile(best.path)
 	if err != nil {
 		return false, err
+	}
+	if err := validateRecoveredConfigData(data); err != nil {
+		return false, fmt.Errorf("quarantine config validation: %w", err)
 	}
 	if err := os.WriteFile(configPath, data, 0o600); err != nil {
 		return false, err

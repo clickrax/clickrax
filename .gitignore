@@ -44,7 +44,7 @@ profile.cov
 logs/
 index/
 
-# Author-only notes (never commit)
+# Author-only notes and publish helpers (never commit)
 docs/MAINTAINER.md
 docs/github-publish.ru.md
 docs/github-upload-web.ru.md

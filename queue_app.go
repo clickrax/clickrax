@@ -5,6 +5,7 @@ import (
 
 	"pbs-win-backup/internal/backuprunner"
 	"pbs-win-backup/internal/backupqueue"
+	"pbs-win-backup/internal/config"
 	"pbs-win-backup/internal/models"
 	"pbs-win-backup/internal/service"
 
@@ -55,6 +56,11 @@ func (a *App) submitBackup(item backupqueue.Item) error {
 }
 
 func (a *App) launchBackupWorker(item backupqueue.Item) error {
+	if cfg, err := config.LoadResilient(); err == nil {
+		a.mu.Lock()
+		a.store.Replace(cfg)
+		a.mu.Unlock()
+	}
 	params, err := backuprunner.ResolveLaunch(a.store.ConfigSnapshot(), item, a.bundle())
 	if err != nil {
 		if job, jerr := a.store.FindJob(item.JobID, a.bundle()); jerr == nil {

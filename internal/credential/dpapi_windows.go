@@ -206,13 +206,16 @@ func writeDPAPISecret(serverID, secret string) error {
 
 	servicePath, err := serviceSecretFilePath(serverID)
 	if err != nil {
+		_ = os.Remove(userPath)
 		return err
 	}
 	serviceEnc, err := protectData([]byte(secret), cryptLocalMachine)
 	if err != nil {
+		_ = os.Remove(userPath)
 		return err
 	}
 	if err := writeEncryptedFile(servicePath, serviceEnc, true); err != nil {
+		_ = os.Remove(userPath)
 		return err
 	}
 
@@ -293,13 +296,16 @@ func writeDPAPISMTPPassword(password string) error {
 	}
 	servicePath, err := smtpServiceFilePath()
 	if err != nil {
+		_ = os.Remove(userPath)
 		return err
 	}
 	serviceEnc, err := protectData([]byte(password), cryptLocalMachine)
 	if err != nil {
+		_ = os.Remove(userPath)
 		return err
 	}
 	if err := writeEncryptedFile(servicePath, serviceEnc, true); err != nil {
+		_ = os.Remove(userPath)
 		return err
 	}
 	if legacy, err := smtpLegacyFilePath(); err == nil {
@@ -374,13 +380,19 @@ func writeDPAPIPassphrase(jobID, passphrase string) error {
 	}
 	servicePath, err := passphraseServiceFilePath(jobID)
 	if err != nil {
+		_ = os.Remove(userPath)
 		return err
 	}
 	serviceEnc, err := protectData([]byte(passphrase), cryptLocalMachine)
 	if err != nil {
+		_ = os.Remove(userPath)
 		return err
 	}
-	return writeEncryptedFile(servicePath, serviceEnc, true)
+	if err := writeEncryptedFile(servicePath, serviceEnc, true); err != nil {
+		_ = os.Remove(userPath)
+		return err
+	}
+	return nil
 }
 
 func readDPAPIPassphrase(jobID string) (string, error) {
@@ -429,7 +441,9 @@ func MigrateSecrets(serverIDs []string) {
 			}
 			continue
 		}
-		_ = writeDPAPISecret(id, string(cred.CredentialBlob))
+		if err := writeDPAPISecret(id, string(cred.CredentialBlob)); err == nil {
+			_ = cred.Delete()
+		}
 	}
 }
 
@@ -446,7 +460,9 @@ func MigrateSMTPPassword() {
 	if password == "" {
 		return
 	}
-	_ = writeDPAPISMTPPassword(password)
+	if err := writeDPAPISMTPPassword(password); err == nil {
+		deleteWincredSMTP()
+	}
 }
 
 // MigratePassphrases copies wincred passphrases into DPAPI files.

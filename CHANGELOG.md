@@ -12,6 +12,36 @@
 
 Started in 2018: new **HP ProLiant DL380 Gen9** (~**$48k** at 2018 FX), StoreOnce 14 TB licensed / 40 TB disks — HP wanted almost the full server price to unlock capacity; controller swap instead. Then PBS; **PbsWinBackup** → **ClickRAX** after the vendor quote and because the Windows CLI client wasn't enough day to day.
 
+### [2.3.15] — 2026-07-13
+
+Tray while backup is running:
+
+- Left-click show window no longer blocks the tray message loop (fixes frozen tray during active backup)
+- Tooltip updates throttled during progress to reduce systray contention
+
+### [2.3.14] — 2026-07-13
+
+Security and reliability audit fixes:
+
+- Re-verify known PBS chunks before reuse (session cache, one probe per digest); re-upload when data is available, clear error after server prune when not
+- Config HMAC mismatch no longer silently re-signs tampered `config.json`
+- Quarantine auto-recovery validates webhook and PBS URLs before restore
+- **Stop backup** always stops the local engine (fixes stale job ID in UI)
+- `LoadResilient()` used when reloading config for backups, schedule, import, and service queue
+- PBS HTTP/2 upgrade: write error checks and 5-minute deadline; `AssignFixedChunks` sends Authorization
+- Credential migration removes legacy WinCred copies; passphrase dual-write rolls back on service-scope failure
+- Backup retry backoff respects cancel context; webhook response bodies drained
+
+### [2.3.13] — 2026-07-13
+
+System tray on window close:
+
+- Setting **Minimize to tray when closing** (default on): closing the window hides to notification area; backups and schedule keep running
+- Tray context menu (right-click): all main sections including Settings, plus Exit
+- Left-click tray icon opens the window; menu only on right-click
+- Tray tooltip shows idle / running job with phase and percent while minimized
+- Tray starts only when the window is first hidden (avoids systray/Wails startup crash)
+
 ### [2.3.12] — 2026-07-13
 
 Fix PBS backup task stuck in «running» after successful finish:
@@ -137,6 +167,36 @@ Scripts and experiments that grew into the client. Nothing was published.
 **2.3 — первый публичный релиз.** Версии 2.0–2.2 несколько лет крутились приватно на своих ПК и локальных PBS, потом выложили на GitHub.
 
 С 2018: новый **HP ProLiant DL380 Gen9** (~**$48k** по курсу 2018), StoreOnce 14 ТБ / 40 ТБ дисков — HP за разблокировку места выставили почти цену сервера, обошлись сменой контроллера. Потом PBS; **PbsWinBackup** → **ClickRAX** — и после такого ценника, и потому что консольного клиента на Windows мало.
+
+### [2.3.15] — 2026-07-13
+
+Трей во время бэкапа:
+
+- ЛКМ «показать окно» больше не блокирует цикл сообщений трея (исправлен «зависший» трей при активном бэкапе)
+- Обновление подсказки трея ограничено по частоте во время progress
+
+### [2.3.14] — 2026-07-13
+
+Исправления по аудиту безопасности и надёжности:
+
+- Перед reuse известных PBS-chunk — проверка на сервере (кэш сессии, один запрос на digest); перезаливка при наличии данных, понятная ошибка после prune на сервере
+- HMAC mismatch больше не переподписывает подменённый `config.json` молча
+- Восстановление из quarantine проверяет webhook и PBS URL
+- **Остановка бэкапа** всегда останавливает локальный движок (устаревший job ID в UI)
+- `LoadResilient()` при перезагрузке конфига для бэкапов, расписания, импорта и очереди службы
+- HTTP/2 upgrade PBS: проверка Write и deadline 5 мин; `AssignFixedChunks` с Authorization
+- Миграция credentials удаляет WinCred; откат при сбое записи passphrase для службы
+- Backoff retry учитывает отмену; drain тела ответа webhook
+
+### [2.3.13] — 2026-07-13
+
+Сворачивание в трей при закрытии окна:
+
+- Настройка **При закрытии окна сворачивать в трей** (по умолчанию вкл.): × скрывает окно в область уведомлений; бэкапы и расписание продолжают работать
+- Контекстное меню трея (ПКМ): все разделы включая Настройки, плюс Выход
+- ЛКМ по иконке трея открывает окно; меню только по ПКМ
+- Подсказка при наведении на иконку: ожидание или выполняющееся задание с фазой и процентом
+- Трей запускается только при первом сворачивании окна (устранён сбой systray+Wails при старте)
 
 ### [2.3.12] — 2026-07-13
 

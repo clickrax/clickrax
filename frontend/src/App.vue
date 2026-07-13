@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 import { GetServiceStatus } from '../wailsjs/go/main/App'
+import { EventsOn } from '../wailsjs/runtime/runtime'
 import { models } from '../wailsjs/go/models'
 import Sidebar from './components/Sidebar.vue'
 import StatusBar from './components/StatusBar.vue'
@@ -11,6 +13,7 @@ import { preloadExecutionState } from './composables/useExecutionState'
 defineOptions({ name: 'AppShell' })
 
 const { t } = useI18n()
+const router = useRouter()
 
 const serviceStatus = ref<models.ServiceStatus | null>(null)
 let pollTimer: ReturnType<typeof setInterval> | null = null
@@ -41,6 +44,11 @@ onMounted(() => {
   preloadExecutionState()
   refreshServiceStatus()
   pollTimer = setInterval(refreshServiceStatus, 5000)
+  EventsOn('navigate', (path: string) => {
+    if (typeof path === 'string' && path) {
+      router.push(path)
+    }
+  })
 })
 
 onUnmounted(() => {

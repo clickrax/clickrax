@@ -286,6 +286,7 @@
   "settings": {
     "title": "Settings",
     "language": "Language",
+    "minimize_to_tray": "Minimize to tray when closing the window (keeps backups running in background)",
     "bandwidth": "Speed limit (Mbps, 0 = unlimited)",
     "chunk_workers": "Parallel PBS streams (0 = auto, 12–32 for 10G)",
     "exclusions": "Default exclusions",

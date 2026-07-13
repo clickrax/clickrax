@@ -52,7 +52,7 @@ func (h *handler) Execute(args []string, r <-chan svc.ChangeRequest, changes cha
 	backupcancel.ReapStale(0)
 	h.processBackupQueue()
 
-	if cfg, err := config.Load(); err == nil {
+	if cfg, err := config.LoadResilient(); err == nil {
 		ids := make([]string, 0, len(cfg.Destinations))
 		for _, d := range cfg.Destinations {
 			ids = append(ids, d.ID)
@@ -95,7 +95,7 @@ func (h *handler) Execute(args []string, r <-chan svc.ChangeRequest, changes cha
 }
 
 func (h *handler) checkSchedule(ctx context.Context, elog *eventlog.Log, now time.Time) {
-	cfg, err := config.Load()
+	cfg, err := config.LoadResilient()
 	if err != nil {
 		appeventlog.Error("расписание: не удалось загрузить config: " + err.Error())
 		return

@@ -19,7 +19,7 @@ func TestRecoverFromQuarantinePicksRichest(t *testing.T) {
 	if err := os.WriteFile(cfgPath, []byte(`{"version":1,"destinations":[],"jobs":[]}`), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	rich := `{"version":1,"destinations":[{"id":"a","type":"pbs","name":"pbs1"}],"jobs":[{"id":"j1"},{"id":"j2"}]}`
+	rich := `{"version":1,"destinations":[{"id":"a","type":"pbs","name":"pbs1","url":"https://pbs.example.local:8007"}],"jobs":[{"id":"j1"},{"id":"j2"}]}`
 	if err := os.WriteFile(filepath.Join(root, "config.json.corrupt-20260101-120000"), []byte(rich), 0o600); err != nil {
 		t.Fatal(err)
 	}
