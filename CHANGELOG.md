@@ -12,6 +12,18 @@
 
 Started in 2018: new **HP ProLiant DL380 Gen9** (~**$48k** at 2018 FX), StoreOnce 14 TB licensed / 40 TB disks — HP wanted almost the full server price to unlock capacity; controller swap instead. Then PBS; **PbsWinBackup** → **ClickRAX** after the vendor quote and because the Windows CLI client wasn't enough day to day.
 
+### [2.3.11] — 2026-07-13
+
+Reliability and incremental backup fixes (audit follow-up):
+
+- Fix PBS API HTTP error handling (`CreateDynamicIndex`, `Finish`, `CloseFixedIndex`, `AssignFixedChunks`, body leaks)
+- Stop per-chunk `GET /chunk` probes — trust previous index (eliminates millions of 404s on large backups)
+- Fall back to local `chunks.json` when PBS previous index is missing; do not wipe local index on transient PBS errors
+- Narrow `previousIndexUnavailable` — network/auth errors no longer force full re-upload
+- After successful PBS `Finish`, local index save failures are warnings (snapshot already committed)
+- UI: show active service/checkpoint backup instead of stale terminal progress; warning status toast; restore email errors surfaced
+- `ConfigSnapshot()` returns a clone (no data race)
+
 ### [2.3.10] — 2026-07-13
 
 Fix PBS `Finish` on large backups:
@@ -119,6 +131,18 @@ Scripts and experiments that grew into the client. Nothing was published.
 **2.3 — первый публичный релиз.** Версии 2.0–2.2 несколько лет крутились приватно на своих ПК и локальных PBS, потом выложили на GitHub.
 
 С 2018: новый **HP ProLiant DL380 Gen9** (~**$48k** по курсу 2018), StoreOnce 14 ТБ / 40 ТБ дисков — HP за разблокировку места выставили почти цену сервера, обошлись сменой контроллера. Потом PBS; **PbsWinBackup** → **ClickRAX** — и после такого ценника, и потому что консольного клиента на Windows мало.
+
+### [2.3.11] — 2026-07-13
+
+Надёжность и инкремент (по итогам аудита):
+
+- Исправлена обработка HTTP-ошибок PBS API (`CreateDynamicIndex`, `Finish`, `CloseFixedIndex`, `AssignFixedChunks`, утечки body)
+- Убраны проверки `GET /chunk` на каждый chunk — доверяем предыдущему индексу (нет миллионов 404)
+- Fallback на локальный `chunks.json`, если PBS previous index недоступен; локальный индекс не стирается при временных ошибках PBS
+- Сужен `previousIndexUnavailable` — сетевые/авторизационные ошибки больше не ведут к полному перезаливу
+- После успешного PBS `Finish` сбой сохранения локального индекса — предупреждение, не ошибка бэкапа
+- UI: активный бэкап службы/checkpoint вместо устаревшего terminal progress; toast для warning; ошибки e-mail restore
+- `ConfigSnapshot()` возвращает клон (без data race)
 
 ### [2.3.10] — 2026-07-13
 

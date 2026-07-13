@@ -111,6 +111,18 @@ const PBS_FIXED_CHUNK_SIZE = 4 * 1024 * 1024
 var blobCompressedMagic = []byte{49, 185, 88, 66, 111, 182, 163, 127}
 var blobUncompressedMagic = []byte{66, 171, 56, 7, 190, 131, 112, 161}
 
+func readHTTPErrorBody(resp *http.Response) string {
+	body, _ := io.ReadAll(resp.Body)
+	msg := strings.TrimSpace(string(body))
+	if len(msg) > 200 {
+		msg = msg[:200] + "..."
+	}
+	if msg == "" {
+		msg = resp.Status
+	}
+	return msg
+}
+
 var zstdEncoderPool = sync.Pool{
 	New: func() any {
 		enc, err := zstd.NewWriter(nil, zstd.WithEncoderLevel(zstd.SpeedFastest))
@@ -178,11 +190,10 @@ func (pbs *PBSClient) CreateFixedIndex(fic FixedIndexCreateReq) (uint64, error) 
 		fmt.Println("Error making request:", err)
 		return 0, err
 	}
+	defer resp2.Body.Close()
 
 	if resp2.StatusCode != http.StatusOK {
-		resp1, _ := io.ReadAll(resp2.Body)
-		fmt.Println("Error making request:", string(resp1), string(resp2.Proto))
-		return 0, fmt.Errorf("Error making request:", string(resp1), string(resp2.Proto))
+		return 0, fmt.Errorf("fixed_index HTTP %d: %s", resp2.StatusCode, readHTTPErrorBody(resp2))
 	}
 
 	resp1, err := io.ReadAll(resp2.Body)
@@ -196,7 +207,6 @@ func (pbs *PBSClient) CreateFixedIndex(fic FixedIndexCreateReq) (uint64, error) 
 		return 0, err
 	}
 	fmt.Println("Writer id: ", R.WriterID)
-	defer resp2.Body.Close()
 	f := File{
 		CryptMode: "none",
 		Csum:      "",
@@ -232,6 +242,9 @@ func (pbs *PBSClient) AssignFixedChunks(writerid uint64, digests []string, offse
 		return err
 	}
 	defer resp2.Body.Close()
+	if resp2.StatusCode != http.StatusOK {
+		return fmt.Errorf("fixed_index HTTP %d: %s", resp2.StatusCode, readHTTPErrorBody(resp2))
+	}
 	return nil
 }
 
@@ -258,13 +271,13 @@ func (pbs *PBSClient) CloseFixedIndex(writerid uint64, checksum string, totalsiz
 		fmt.Println("Error making request:", err)
 		return err
 	}
-
+	defer resp2.Body.Close()
+	if resp2.StatusCode != http.StatusOK {
+		return fmt.Errorf("fixed_close HTTP %d: %s", resp2.StatusCode, readHTTPErrorBody(resp2))
+	}
 	f := &pbs.Manifest.Files[pbs.WritersManifest[writerid]]
-
 	f.Csum = checksum
 	f.Size = int64(totalsize)
-
-	defer resp2.Body.Close()
 	return nil
 }
 
@@ -283,11 +296,10 @@ func (pbs *PBSClient) CreateDynamicIndex(name string) (uint64, error) {
 		fmt.Println("Error making request:", err)
 		return 0, err
 	}
+	defer resp2.Body.Close()
 
 	if resp2.StatusCode != http.StatusOK {
-		resp1, err := io.ReadAll(resp2.Body)
-		fmt.Println("Error making request:", string(resp1), string(resp2.Proto))
-		return 0, err
+		return 0, fmt.Errorf("dynamic_index HTTP %d: %s", resp2.StatusCode, readHTTPErrorBody(resp2))
 	}
 
 	resp1, err := io.ReadAll(resp2.Body)
@@ -301,7 +313,6 @@ func (pbs *PBSClient) CreateDynamicIndex(name string) (uint64, error) {
 		return 0, err
 	}
 	fmt.Println("Writer id: ", R.WriterID)
-	defer resp2.Body.Close()
 	f := File{
 		CryptMode: "none",
 		Csum:      "",
@@ -443,21 +454,13 @@ func (pbs *PBSClient) CloseDynamicIndex(writerid uint64, checksum string, totals
 		fmt.Println("Error making request:", err)
 		return err
 	}
-
-	f := &pbs.Manifest.Files[pbs.WritersManifest[writerid]]
-
-	f.Csum = checksum
-	f.Size = int64(totalsize)
-
 	defer resp2.Body.Close()
 	if resp2.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp2.Body)
-		msg := strings.TrimSpace(string(body))
-		if len(msg) > 200 {
-			msg = msg[:200] + "..."
-		}
-		return fmt.Errorf("dynamic_close HTTP %d: %s", resp2.StatusCode, msg)
+		return fmt.Errorf("dynamic_close HTTP %d: %s", resp2.StatusCode, readHTTPErrorBody(resp2))
 	}
+	f := &pbs.Manifest.Files[pbs.WritersManifest[writerid]]
+	f.Csum = checksum
+	f.Size = int64(totalsize)
 	return nil
 }
 
@@ -519,25 +522,18 @@ func (pbs *PBSClient) UploadManifest() error {
 
 func (pbs *PBSClient) Finish() error {
 	req, err := http.NewRequest("POST", pbs.BaseURL+"/finish", nil)
-	req.Header.Add("Authorization", fmt.Sprintf("PBSAPIToken=%s:%s", pbs.AuthID, pbs.Secret))
 	if err != nil {
 		return err
 	}
+	req.Header.Add("Authorization", fmt.Sprintf("PBSAPIToken=%s:%s", pbs.AuthID, pbs.Secret))
 	resp2, err := pbs.Client.Do(req)
 	if err != nil {
 		fmt.Println("Error making request:", err)
-		if err != nil {
-			return err
-		}
+		return err
 	}
 	defer resp2.Body.Close()
 	if resp2.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp2.Body)
-		msg := strings.TrimSpace(string(body))
-		if len(msg) > 200 {
-			msg = msg[:200] + "..."
-		}
-		return fmt.Errorf("finish HTTP %d: %s", resp2.StatusCode, msg)
+		return fmt.Errorf("finish HTTP %d: %s", resp2.StatusCode, readHTTPErrorBody(resp2))
 	}
 	pbs.backupConn = nil
 	return nil
@@ -824,22 +820,35 @@ func (pbs *PBSClient) GetKnownSha265FromFIDX(archivename string) (*haxmap.Map[st
 
 }
 
-// ChunkExists reports whether chunk data is present on PBS (HEAD-style GET, body discarded).
-func (pbs *PBSClient) ChunkExists(digest string) bool {
+// ChunkExistsOK reports whether chunk data is present on PBS. Network and server
+// errors are returned separately from a missing chunk (404).
+func (pbs *PBSClient) ChunkExistsOK(digest string) (bool, error) {
 	q := &url.Values{}
 	q.Add("digest", digest)
 	req, err := http.NewRequest("GET", pbs.BaseURL+"/chunk?"+q.Encode(), nil)
 	if err != nil {
-		return false
+		return false, err
 	}
 	req.Header.Add("Authorization", fmt.Sprintf("PBSAPIToken=%s:%s", pbs.AuthID, pbs.Secret))
 	resp, err := pbs.Client.Do(req)
 	if err != nil {
-		return false
+		return false, err
 	}
 	defer resp.Body.Close()
 	_, _ = io.Copy(io.Discard, resp.Body)
-	return resp.StatusCode == http.StatusOK
+	if resp.StatusCode == http.StatusOK {
+		return true, nil
+	}
+	if resp.StatusCode == http.StatusNotFound {
+		return false, nil
+	}
+	return false, fmt.Errorf("chunk HTTP %d", resp.StatusCode)
+}
+
+// ChunkExists reports whether chunk data is present on PBS (HEAD-style GET, body discarded).
+func (pbs *PBSClient) ChunkExists(digest string) bool {
+	ok, err := pbs.ChunkExistsOK(digest)
+	return err == nil && ok
 }
 
 func (pbs *PBSClient) GetChunkData(digest string) ([]byte, error) {

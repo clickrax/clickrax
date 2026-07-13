@@ -37,8 +37,10 @@ func (a *App) runBackupWorker(
 		service.EndScheduledRun(item.JobID, item.SlotKey)
 		a.processBackupQueue()
 	}()
+	var panicked bool
 	defer func() {
 		if r := recover(); r != nil {
+			panicked = true
 			eventlog.Error(fmt.Sprintf("panic during backup %s: %v", job.Name, r))
 			errMsg := b.Tf("backup.critical_panic", map[string]string{"err": fmt.Sprintf("%v", r)})
 			result := models.JobRunResult{
@@ -71,6 +73,9 @@ func (a *App) runBackupWorker(
 	})
 	if out.Requeued {
 		eventlog.Info("очередь: повторная постановка после блокировки (" + job.Name + ")")
+		return
+	}
+	if panicked {
 		return
 	}
 	service.RecordScheduleOutcome(job, scheduledAt, out.Result.Status)
@@ -118,7 +123,13 @@ func (a *App) finishBackupRun(
 	} else if result.Status == "error" {
 		finalPhase = models.PhaseError
 		finalMsg = result.Error
-	} else if result.Status != "ok" && result.Status != "warning" {
+	} else if result.Status == "warning" {
+		finalPhase = models.PhaseDone
+		finalMsg = result.Message
+		if finalMsg == "" {
+			finalMsg = b.T("backup.toast_warning")
+		}
+	} else if result.Status != "ok" {
 		finalPhase = models.PhaseError
 		finalMsg = result.Status
 	}

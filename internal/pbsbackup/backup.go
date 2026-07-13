@@ -19,6 +19,7 @@ import (
 
 	"pbs-win-backup/internal/chunkindex"
 	"pbs-win-backup/internal/backup/exclude"
+	"pbs-win-backup/internal/eventlog"
 	"pbs-win-backup/internal/i18n"
 	"pbs-win-backup/internal/models"
 )
@@ -44,7 +45,6 @@ type chunkState struct {
 	knownChunks        *knownChunks
 	limiter            *bandwidthLimiter
 	uploads            *chunkUploadPipeline
-	chunkProbeCache    map[string]bool
 }
 
 func (c *chunkState) init(ctx context.Context, stats *Stats, known *knownChunks, limiter *bandwidthLimiter) {
@@ -82,27 +82,8 @@ func (c *chunkState) cancelled() bool {
 	}
 }
 
-func (c *chunkState) chunkMissingOnServer(client *pbscommon.PBSClient, digestHex string, inKnown bool) bool {
-	if client == nil || !inKnown || digestHex == "" || client.BaseURL == "" {
-		return false
-	}
-	if c.chunkProbeCache != nil {
-		if exists, ok := c.chunkProbeCache[digestHex]; ok {
-			return !exists
-		}
-	} else {
-		c.chunkProbeCache = make(map[string]bool)
-	}
-	exists := client.ChunkExists(digestHex)
-	c.chunkProbeCache[digestHex] = exists
-	return !exists
-}
-
-func (c *chunkState) commitChunk(shahash string, chunkLen int, inKnown, missingOnServer bool, client *pbscommon.PBSClient, digest [32]byte) error {
-	if inKnown && !missingOnServer {
-		missingOnServer = c.chunkMissingOnServer(client, shahash, inKnown)
-	}
-	if shouldUploadChunk(inKnown, missingOnServer) {
+func (c *chunkState) commitChunk(shahash string, chunkLen int, inKnown bool, client *pbscommon.PBSClient, digest [32]byte) error {
+	if !inKnown {
 		c.bindUploads(client)
 		c.newchunk.Add(1)
 		if err := c.uploads.upload(c.wrid, shahash, c.currentChunk); err != nil {
@@ -134,7 +115,7 @@ func (c *chunkState) flushPendingChunk(client *pbscommon.PBSClient) error {
 	shahash := hex.EncodeToString(bindigest[:])
 	chunkLen := len(c.currentChunk)
 	inKnown := c.knownChunks.Has(bindigest)
-	return c.commitChunk(shahash, chunkLen, inKnown, false, client, bindigest)
+	return c.commitChunk(shahash, chunkLen, inKnown, client, bindigest)
 }
 
 func (c *chunkState) reuseChunks(chunks []pbscommon.PXARFastChunk, client *pbscommon.PBSClient) error {
@@ -156,14 +137,7 @@ func (c *chunkState) reuseChunks(chunks []pbscommon.PXARFastChunk, client *pbsco
 		}
 		var digest [32]byte
 		copy(digest[:], raw)
-		inKnown := c.knownChunks.Has(digest)
-		missingOnServer := c.chunkMissingOnServer(client, ch.DigestHex, inKnown)
-		if shouldUploadChunk(inKnown, missingOnServer) {
-			return i18n.Ef("pbs.chunk_reuse_not_known", map[string]string{
-				"digest": ch.DigestHex[:min(12, len(ch.DigestHex))],
-			})
-		}
-		if err := c.commitChunk(ch.DigestHex, ch.Len, true, missingOnServer, client, digest); err != nil {
+		if err := c.commitChunk(ch.DigestHex, ch.Len, true, client, digest); err != nil {
 			return err
 		}
 	}
@@ -189,7 +163,7 @@ func (c *chunkState) handleData(b []byte, client *pbscommon.PBSClient) error {
 
 		chunkLen := len(c.currentChunk)
 		inKnown := c.knownChunks.Has(bindigest)
-		if err := c.commitChunk(shahash, chunkLen, inKnown, false, client, bindigest); err != nil {
+		if err := c.commitChunk(shahash, chunkLen, inKnown, client, bindigest); err != nil {
 			return err
 		}
 		b = b[chunkpos:]
@@ -212,7 +186,7 @@ func (c *chunkState) eof(client *pbscommon.PBSClient) error {
 		shahash := hex.EncodeToString(bindigest[:])
 		chunkLen := len(c.currentChunk)
 		inKnown := c.knownChunks.Has(bindigest)
-		if err := c.commitChunk(shahash, chunkLen, inKnown, false, client, bindigest); err != nil {
+		if err := c.commitChunk(shahash, chunkLen, inKnown, client, bindigest); err != nil {
 			return err
 		}
 	}
@@ -233,19 +207,45 @@ func (c *chunkState) eof(client *pbscommon.PBSClient) error {
 	return client.CloseDynamicIndex(c.wrid, hex.EncodeToString(c.chunkdigests.Sum(nil)), c.pos, c.chunkcount)
 }
 
-func loadKnownChunks(client *pbscommon.PBSClient, archiveName string, stats *Stats) (*knownChunks, int, error) {
+func loadKnownChunksFromLocal(jobID string, stats *Stats) (*knownChunks, int, error) {
+	st, err := chunkindex.Load(jobID)
+	if err != nil {
+		return newKnownChunks(0), 0, nil
+	}
+	if st == nil || len(st.ChunkHashes) == 0 {
+		return newKnownChunks(0), 0, nil
+	}
+	known := newKnownChunks(len(st.ChunkHashes))
+	count := 0
+	for _, h := range st.ChunkHashes {
+		raw, err := hex.DecodeString(h)
+		if err != nil || len(raw) != 32 {
+			continue
+		}
+		var d [32]byte
+		copy(d[:], raw)
+		known.Add(d)
+		count++
+	}
+	if stats != nil && count > 0 {
+		stats.SetStage(i18n.L("pbs.index_local_chunks", map[string]string{"n": fmt.Sprintf("%d", count)}))
+	}
+	return known, count, nil
+}
+
+func loadKnownChunks(client *pbscommon.PBSClient, archiveName, jobID string, stats *Stats) (*knownChunks, int, error) {
 	if stats != nil {
 		stats.SetStage(i18n.L("pbs.index_load_prev", nil))
 	}
 	previous, err := client.DownloadPreviousToBytes(archiveName)
 	if err != nil {
 		if previousIndexUnavailable(err) {
-			return newKnownChunks(0), 0, nil
+			return loadKnownChunksFromLocal(jobID, stats)
 		}
 		return nil, 0, err
 	}
 	if len(previous) == 0 {
-		return newKnownChunks(0), 0, nil
+		return loadKnownChunksFromLocal(jobID, stats)
 	}
 	if stats != nil {
 		stats.SetStage(i18n.L("pbs.index_parse", map[string]string{"vol": formatByteSize(int64(len(previous)))}))
@@ -292,15 +292,11 @@ func backupReal(ctx context.Context, client *pbscommon.PBSClient, server models.
 		known = newKnownChunks(0)
 	} else {
 		var serverChunks int
-		known, serverChunks, err = loadKnownChunks(client, "backup.pxar.didx", stats)
+		known, serverChunks, err = loadKnownChunks(client, "backup.pxar.didx", jobID, stats)
 		if err != nil {
 			return nil, i18n.Ewrap("pbs.index_load_prev_err", nil, err)
 		}
 		hasPreviousIndex = serverChunks > 0
-		// Known chunks come only from PBS previous-index; local chunks.json is write-only cache.
-		if serverChunks == 0 {
-			_ = chunkindex.Clear(jobID)
-		}
 	}
 
 	ensureFastCache(ctx, server, secret, jobID, client.Manifest.BackupID, backupdir, forceFull, hasPreviousIndex, stats)
@@ -569,19 +565,28 @@ func backupReal(ctx context.Context, client *pbscommon.PBSClient, server models.
 		})
 	}
 	if err := fi.save(snapshotTime); err != nil {
-		_ = ClearPBSFileIndex(jobID)
-		return nil, i18n.Ewrap("pbs.fast_index_save", nil, err)
+		warn := i18n.L("pbs.fast_index_save_warn", map[string]string{"err": err.Error()})
+		if stats != nil {
+			stats.addWarning(warn)
+		}
+		eventlog.Warning(warn)
 	}
 	if stats != nil {
 		stats.SetStageID(stageFinalizeSavePxarIdx, map[string]string{
 			"count": formatCount(pxarIdxCount),
 		})
 	}
-	_ = saveLocalPxarIndex(SnapshotRef{
+	if err := saveLocalPxarIndex(SnapshotRef{
 		BackupID:   client.Manifest.BackupID,
 		Time:       snapshotTime,
 		BackupTime: backupTime,
-	}, indexRecorder.index)
+	}, indexRecorder.index); err != nil {
+		warn := i18n.L("pbs.pxar_index_local_save_warn", map[string]string{"err": err.Error()})
+		if stats != nil {
+			stats.addWarning(warn)
+		}
+		eventlog.Warning(warn)
+	}
 	return known, nil
 }
 

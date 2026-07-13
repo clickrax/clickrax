@@ -99,7 +99,9 @@ func (a *App) GetExecutionState() models.ExecutionState {
 
 	seenActive := map[string]struct{}{}
 	if lp.JobID != "" && isTerminalPhase(lp.Phase) {
-		seenActive[lp.JobID] = struct{}{}
+		if !a.isJobActivelyRunning(lp.JobID) {
+			seenActive[lp.JobID] = struct{}{}
+		}
 	}
 	if running {
 		if lp.JobID != "" && isInProgressPhase(lp.Phase) {

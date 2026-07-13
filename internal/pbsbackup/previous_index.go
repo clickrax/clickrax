@@ -10,12 +10,10 @@ func previousIndexUnavailable(err error) bool {
 	}
 	msg := strings.ToLower(err.Error())
 	for _, k := range []string{
-		"pbs backup upgrade",
-		"previous http 400",
-		"400 bad request",
 		"no valid previous",
 		"no previous",
-		"not found",
+		"previous http 404",
+		"http 404",
 	} {
 		if strings.Contains(msg, k) {
 			return true

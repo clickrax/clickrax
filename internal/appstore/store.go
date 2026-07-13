@@ -267,11 +267,11 @@ func (s *Store) Settings() models.AppSettings {
 	return s.cfg.Settings
 }
 
-// ConfigSnapshot returns the live config pointer for read-only hot paths (caller must not mutate).
+// ConfigSnapshot returns a clone of the current config for read-only hot paths.
 func (s *Store) ConfigSnapshot() *models.Config {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	return s.cfg
+	return config.Clone(s.cfg)
 }
 
 // ShouldRunCatchUpAfterJobSave reports whether GUI schedule loop should fire immediately.

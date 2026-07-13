@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"pbs-win-backup/internal/appstore"
+	"pbs-win-backup/internal/branding"
 	"pbs-win-backup/internal/config"
 	"pbs-win-backup/internal/locale"
 	"pbs-win-backup/internal/models"
@@ -99,7 +100,10 @@ func (a *App) GetSettings() models.AppSettings {
 
 func (a *App) sendRestoreEmail(job models.BackupJob, result models.JobRunResult) {
 	settings := a.store.Settings()
+	b := a.bundle()
 	go func() {
-		_ = notify.DispatchRestoreEmail(settings, job, result)
+		if err := notify.DispatchRestoreEmail(settings, job, result); err != nil {
+			notify.ShowToast(branding.Name, b.Tf("notify.email_failed", map[string]string{"err": err.Error()}))
+		}
 	}()
 }

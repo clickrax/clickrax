@@ -762,6 +762,15 @@ func (a *App) GetLastProgress() models.ProgressEvent {
 	switch lp.Phase {
 	case models.PhaseDone, models.PhaseError, models.PhaseCancelled, models.PhaseIdle, "":
 		if lp.Phase != "" {
+			if a.isJobActivelyRunning(lp.JobID) {
+				b := a.bundle()
+				return a.localizeProgress(models.ProgressEvent{
+					JobID:   lp.JobID,
+					JobName: lp.JobName,
+					Phase:   models.PhasePreparing,
+					Message: b.T("backup.running_elsewhere"),
+				})
+			}
 			return lp
 		}
 	}

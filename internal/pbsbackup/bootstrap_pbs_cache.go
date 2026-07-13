@@ -247,9 +247,6 @@ func ensureFastCache(
 		return
 	}
 	if len(records) > maxBootstrapChunks {
-		if !isPBSCacheReady(jobID) {
-			_ = ClearPBSFileIndex(jobID)
-		}
 		if stats != nil {
 			if isPBSCacheReady(jobID) {
 				stats.SetStage(i18n.L("pbs.index_fast_local", map[string]string{
