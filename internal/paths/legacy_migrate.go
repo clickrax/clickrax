@@ -70,8 +70,15 @@ func copyTree(src, dst string) error {
 		if d.IsDir() {
 			return os.MkdirAll(target, 0o755)
 		}
-		if _, err := os.Stat(target); err == nil {
-			return nil
+		srcInfo, err := d.Info()
+		if err != nil {
+			return err
+		}
+		if dstInfo, err := os.Stat(target); err == nil {
+			if dstInfo.Size() >= srcInfo.Size() {
+				return nil
+			}
+			_ = os.Remove(target)
 		}
 		return copyFile(path, target, d)
 	})
@@ -88,9 +95,6 @@ func copyFile(src, dst string, d os.DirEntry) error {
 	}
 	if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
 		return err
-	}
-	if _, err := os.Stat(dst); err == nil {
-		return nil
 	}
 	return AtomicWrite(dst, data, info.Mode().Perm())
 }

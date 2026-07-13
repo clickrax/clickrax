@@ -12,6 +12,14 @@
 
 Started in 2018: new **HP ProLiant DL380 Gen9** (~**$48k** at 2018 FX), StoreOnce 14 TB licensed / 40 TB disks — HP wanted almost the full server price to unlock capacity; controller swap instead. Then PBS; **PbsWinBackup** → **ClickRAX** after the vendor quote and because the Windows CLI client wasn't enough day to day.
 
+### [2.3.17] — 2026-07-13
+
+Audit follow-up (remaining gaps):
+
+- GUI config saves reload from disk before write (prevents stale in-memory snapshot overwriting newer `config.json`)
+- Legacy migration re-copies truncated target files (smaller than source)
+- Schedule state tests for corrupt JSON and neighbor `last_run` preservation
+
 ### [2.3.16] — 2026-07-13
 
 Audit hotspot fixes (v2.3.15 follow-up):
@@ -179,6 +187,14 @@ Scripts and experiments that grew into the client. Nothing was published.
 **2.3 — первый публичный релиз.** Версии 2.0–2.2 несколько лет крутились приватно на своих ПК и локальных PBS, потом выложили на GitHub.
 
 С 2018: новый **HP ProLiant DL380 Gen9** (~**$48k** по курсу 2018), StoreOnce 14 ТБ / 40 ТБ дисков — HP за разблокировку места выставили почти цену сервера, обошлись сменой контроллера. Потом PBS; **PbsWinBackup** → **ClickRAX** — и после такого ценника, и потому что консольного клиента на Windows мало.
+
+### [2.3.17] — 2026-07-13
+
+Доработка по аудиту (остаточные пробелы):
+
+- Сохранение конфига из GUI перечитывает файл с диска перед записью (устаревший снимок не затирает свежий `config.json`)
+- Legacy-миграция перекопирует усечённые файлы (размер меньше источника)
+- Тесты schedule_state: битый JSON и сохранение `last_run` соседних джобов
 
 ### [2.3.16] — 2026-07-13
 

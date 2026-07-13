@@ -40,10 +40,15 @@ func (s *Store) Replace(cfg *models.Config) {
 	s.mu.Unlock()
 }
 
-// Update runs fn against the live config under write lock and saves on success.
+// Update runs fn against the latest on-disk config under write lock and saves on success.
 func (s *Store) Update(fn func(*models.Config) error) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	diskCfg, err := config.LoadResilient()
+	if err != nil {
+		return err
+	}
+	s.cfg = diskCfg
 	if err := fn(s.cfg); err != nil {
 		return err
 	}

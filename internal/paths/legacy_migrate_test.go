@@ -89,3 +89,34 @@ func TestDataDirPrefersLegacyWhenClickRAXEmpty(t *testing.T) {
 		t.Fatal("expected migrated config in ClickRAX")
 	}
 }
+
+func TestCopyTree_RecopiesTruncatedTarget(t *testing.T) {
+	root := t.TempDir()
+	src := filepath.Join(root, "src")
+	dst := filepath.Join(root, "dst")
+	if err := os.MkdirAll(src, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	full := []byte("full-secret-content")
+	if err := os.WriteFile(filepath.Join(src, "secret.dpapi"), full, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(dst, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	truncated := filepath.Join(dst, "secret.dpapi")
+	if err := os.WriteFile(truncated, full[:4], 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := copyTree(src, dst); err != nil {
+		t.Fatal(err)
+	}
+	got, err := os.ReadFile(truncated)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(got) != string(full) {
+		t.Fatalf("truncated file not repaired: got %q want %q", got, full)
+	}
+}
