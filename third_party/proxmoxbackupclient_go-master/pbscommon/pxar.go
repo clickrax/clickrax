@@ -166,8 +166,9 @@ type PXARArchive struct {
 
 	catalog_pos uint64
 
-	FilesTotal   *atomic.Int64
-	FilesSkipped *atomic.Int64
+	FilesTotal     *atomic.Int64
+	FilesSkipped   *atomic.Int64 // exclusions / unreadable (not fast cache hits)
+	FilesFromCache *atomic.Int64 // unchanged files skipped via chunk-span reuse
 
 	ShouldSkip         func(fullPath, name string, isDir bool) bool
 	SkipUnreadableDirs bool
@@ -566,7 +567,9 @@ func (a *PXARArchive) tryReuseFileChunks(path, basename string, fileInfo os.File
 	if a.FilesTotal != nil {
 		a.FilesTotal.Add(1)
 	}
-	if a.FilesSkipped != nil {
+	if a.FilesFromCache != nil {
+		a.FilesFromCache.Add(1)
+	} else if a.FilesSkipped != nil {
 		a.FilesSkipped.Add(1)
 	}
 	header := a.buildFileHeaderBytes(basename, fileInfo)
@@ -607,7 +610,9 @@ func (a *PXARArchive) WriteFile(path string, basename string) (CatalogFile, erro
 			if a.FilesTotal != nil {
 				a.FilesTotal.Add(1)
 			}
-			if a.FilesSkipped != nil {
+			if a.FilesFromCache != nil {
+				a.FilesFromCache.Add(1)
+			} else if a.FilesSkipped != nil {
 				a.FilesSkipped.Add(1)
 			}
 			if a.OnPxarStreamReuse != nil && a.ReuseFileChunks != nil {

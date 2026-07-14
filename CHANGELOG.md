@@ -12,6 +12,13 @@
 
 Started in 2018: new **HP ProLiant DL380 Gen9** (~**$48k** at 2018 FX), StoreOnce 14 TB licensed / 40 TB disks — HP wanted almost the full server price to unlock capacity; controller swap instead. Then PBS; **PbsWinBackup** → **ClickRAX** after the vendor quote and because the Windows CLI client wasn't enough day to day.
 
+### [2.3.19] — 2026-07-14
+
+PBS incremental / chunk reuse regression fix:
+
+- Trust previous index / `chunks.json` for known digests again (revert 2.3.14 backup-session `GET /chunk` probes that returned false 404s and forced full re-upload)
+- Separate counters: «from cache» = fast file reuse; access/exclude skips no longer inflate «from cache» or the «fast incremental skipped» progress line
+
 ### [2.3.18] — 2026-07-13
 
 Tray restore fix:
@@ -194,6 +201,13 @@ Scripts and experiments that grew into the client. Nothing was published.
 **2.3 — первый публичный релиз.** Версии 2.0–2.2 несколько лет крутились приватно на своих ПК и локальных PBS, потом выложили на GitHub.
 
 С 2018: новый **HP ProLiant DL380 Gen9** (~**$48k** по курсу 2018), StoreOnce 14 ТБ / 40 ТБ дисков — HP за разблокировку места выставили почти цену сервера, обошлись сменой контроллера. Потом PBS; **PbsWinBackup** → **ClickRAX** — и после такого ценника, и потому что консольного клиента на Windows мало.
+
+### [2.3.19] — 2026-07-14
+
+Исправление регрессии инкремента PBS / chunk-reuse:
+
+- Снова доверяем previous index / `chunks.json` для известных digests (откат 2.3.14 probe `GET /chunk` на backup-сессии — ложные 404 и полная перезаливка)
+- Раздельные счётчики: «из кэша» = быстрый reuse файлов; пропуски доступа/exclude больше не раздувают «из кэша» и строку «быстрый инкремент»
 
 ### [2.3.18] — 2026-07-13
 

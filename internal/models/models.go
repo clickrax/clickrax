@@ -135,6 +135,7 @@ type ProgressEvent struct {
 	FilesDone        int           `json:"files_done"`
 	FilesTotal       int           `json:"files_total"`
 	FilesSkipped     int           `json:"files_skipped"`
+	FilesFromCache   int           `json:"files_from_cache"`
 	FilesChanged     int           `json:"files_changed"`
 	Message          string        `json:"message"`
 	Trigger          string        `json:"trigger,omitempty"`
@@ -216,6 +217,7 @@ type ExecutionRun struct {
 	FilesDone        int     `json:"files_done"`
 	FilesTotal       int     `json:"files_total"`
 	FilesSkipped     int     `json:"files_skipped"`
+	FilesFromCache   int     `json:"files_from_cache"`
 	CurrentPath      string  `json:"current_path,omitempty"`
 	Message          string  `json:"message"`
 	StartedAt        string  `json:"started_at"`

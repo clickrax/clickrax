@@ -320,7 +320,7 @@ func (e *Engine) Run(ctx context.Context, params RunParams) (models.JobRunResult
 	result.BytesTransferred = stats.BytesNew.Load()
 	result.BytesReused = stats.BytesReused.Load()
 	result.FilesTotal = int(stats.FilesTotal.Load())
-	result.FilesSkipped = int(stats.FilesSkipped.Load())
+	result.FilesSkipped = int(stats.FilesFromCache.Load())
 	finalizeRunResult(&result, stats.Warning, b)
 	if stats.BackupTimeUnix > 0 {
 		result.Snapshot = time.Unix(stats.BackupTimeUnix, 0).UTC().Format(time.RFC3339)

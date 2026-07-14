@@ -372,6 +372,7 @@ export namespace models {
 	    files_done: number;
 	    files_total: number;
 	    files_skipped: number;
+	    files_from_cache: number;
 	    current_path?: string;
 	    message: string;
 	    started_at: string;
@@ -401,6 +402,7 @@ export namespace models {
 	        this.files_done = source["files_done"];
 	        this.files_total = source["files_total"];
 	        this.files_skipped = source["files_skipped"];
+	        this.files_from_cache = source["files_from_cache"];
 	        this.current_path = source["current_path"];
 	        this.message = source["message"];
 	        this.started_at = source["started_at"];
@@ -639,6 +641,7 @@ export namespace models {
 	    files_done: number;
 	    files_total: number;
 	    files_skipped: number;
+	    files_from_cache: number;
 	    files_changed: number;
 	    message: string;
 	    trigger?: string;
@@ -667,6 +670,7 @@ export namespace models {
 	        this.files_done = source["files_done"];
 	        this.files_total = source["files_total"];
 	        this.files_skipped = source["files_skipped"];
+	        this.files_from_cache = source["files_from_cache"];
 	        this.files_changed = source["files_changed"];
 	        this.message = source["message"];
 	        this.trigger = source["trigger"];

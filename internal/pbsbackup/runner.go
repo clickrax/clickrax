@@ -23,7 +23,8 @@ type Stats struct {
 	BytesNew         atomic.Int64
 	BytesReused      atomic.Int64
 	FilesTotal           atomic.Int64
-	FilesSkipped         atomic.Int64
+	FilesSkipped         atomic.Int64 // exclusions / unreadable
+	FilesFromCache       atomic.Int64 // fast incremental hits
 	VirtualBytesProcessed atomic.Int64
 	EstimatedFilesTotal  atomic.Int64
 	BackupTimeUnix       int64
@@ -179,8 +180,9 @@ func Run(ctx context.Context, opts Options) (*Stats, error) {
 		progressMu.Unlock()
 		filesDone := int(sample.filesDone)
 		filesTotal := int(sample.filesTotalEstimate)
+		filesFromCache := int(stats.FilesFromCache.Load())
 		filesSkipped := int(stats.FilesSkipped.Load())
-		filesChanged := filesDone - filesSkipped
+		filesChanged := filesDone - filesFromCache
 		if filesChanged < 0 {
 			filesChanged = 0
 		}
@@ -201,6 +203,7 @@ func Run(ctx context.Context, opts Options) (*Stats, error) {
 			FilesDone:        filesDone,
 			FilesTotal:       filesTotal,
 			FilesSkipped:     filesSkipped,
+			FilesFromCache:   filesFromCache,
 			FilesChanged:     filesChanged,
 			Message:          msg,
 		})
@@ -312,10 +315,10 @@ func Run(ctx context.Context, opts Options) (*Stats, error) {
 					pct = pctFin
 				} else if newC+reuseC > 0 || effectiveProcessedBytes(sample) > 0 || (stats.FastReuseActive() && files > 0) {
 					phase = models.PhaseTransfer
-					skipped := stats.FilesSkipped.Load()
-					if skipped > 0 && stats.FastReuseActive() {
+					fromCache := stats.FilesFromCache.Load()
+					if fromCache > 0 && stats.FastReuseActive() {
 						msg = i18n.L("pbs.fast_inc_skipped", map[string]string{
-							"count": fmt.Sprintf("%d", skipped),
+							"count": fmt.Sprintf("%d", fromCache),
 							"n":     fmt.Sprintf("%d", newC),
 							"max":   fmt.Sprintf("%d", reuseC),
 						})

@@ -111,14 +111,19 @@ function fmtCount(n: number) {
 }
 
 function isPBSCacheProgress(run: models.ExecutionRun) {
-  return (run.files_skipped || 0) > 0
+  return (run.files_from_cache || 0) > 0
+    || (run.files_skipped || 0) > 0
     || (isPBSChunks(run) && (run.files_total || 0) > 0)
+}
+
+function filesFromCache(run: models.ExecutionRun) {
+  return run.files_from_cache || 0
 }
 
 function filesNewChanged(run: models.ExecutionRun) {
   const done = run.files_done || 0
-  const skipped = run.files_skipped || 0
-  return Math.max(0, done - skipped)
+  const fromCache = filesFromCache(run)
+  return Math.max(0, done - fromCache)
 }
 
 function filesBeyondCache(run: models.ExecutionRun) {
@@ -172,6 +177,7 @@ function progressFromEvent(p: any): models.ExecutionRun {
     files_done: p.files_done,
     files_total: p.files_total,
     files_skipped: p.files_skipped,
+    files_from_cache: p.files_from_cache,
     current_path: p.current_path,
     message: p.message,
     can_stop: true,
@@ -286,7 +292,7 @@ async function dismiss(run: models.ExecutionRun) {
               <template v-if="isPBSCacheProgress(run)">
                 <span>{{ t('progress.files_done') }}: {{ fmtCount(run.files_done) }}</span>
                 <span v-if="run.files_total">{{ t('progress.files_cache_total') }}: {{ fmtCount(run.files_total) }}</span>
-                <span v-if="run.files_skipped">{{ t('progress.files_from_cache') }}: {{ fmtCount(run.files_skipped) }}</span>
+                <span v-if="filesFromCache(run)">{{ t('progress.files_from_cache') }}: {{ fmtCount(filesFromCache(run)) }}</span>
                 <span v-if="filesNewChanged(run)">{{ t('progress.files_new_changed') }}: {{ fmtCount(filesNewChanged(run)) }}</span>
                 <span v-if="filesBeyondCache(run)" class="files-beyond">{{ t('progress.files_beyond_cache', { n: fmtCount(filesBeyondCache(run)) }) }}</span>
               </template>
@@ -349,7 +355,7 @@ async function dismiss(run: models.ExecutionRun) {
               <template v-if="isPBSCacheProgress(run)">
                 <span>{{ t('progress.files_done') }}: {{ fmtCount(run.files_done) }}</span>
                 <span v-if="run.files_total">{{ t('progress.files_cache_total') }}: {{ fmtCount(run.files_total) }}</span>
-                <span v-if="run.files_skipped">{{ t('progress.files_from_cache') }}: {{ fmtCount(run.files_skipped) }}</span>
+                <span v-if="filesFromCache(run)">{{ t('progress.files_from_cache') }}: {{ fmtCount(filesFromCache(run)) }}</span>
                 <span v-if="filesNewChanged(run)">{{ t('progress.files_new_changed') }}: {{ fmtCount(filesNewChanged(run)) }}</span>
                 <span v-if="filesBeyondCache(run)" class="files-beyond">{{ t('progress.files_beyond_cache', { n: fmtCount(filesBeyondCache(run)) }) }}</span>
               </template>
@@ -399,7 +405,7 @@ async function dismiss(run: models.ExecutionRun) {
               <template v-if="isPBSCacheProgress(run)">
                 <span>{{ t('progress.files_done') }}: {{ fmtCount(run.files_done) }}</span>
                 <span v-if="run.files_total">{{ t('progress.files_cache_total') }}: {{ fmtCount(run.files_total) }}</span>
-                <span v-if="run.files_skipped">{{ t('progress.files_from_cache') }}: {{ fmtCount(run.files_skipped) }}</span>
+                <span v-if="filesFromCache(run)">{{ t('progress.files_from_cache') }}: {{ fmtCount(filesFromCache(run)) }}</span>
                 <span v-if="filesNewChanged(run)">{{ t('progress.files_new_changed') }}: {{ fmtCount(filesNewChanged(run)) }}</span>
                 <span v-if="filesBeyondCache(run)" class="files-beyond">{{ t('progress.files_beyond_cache', { n: fmtCount(filesBeyondCache(run)) }) }}</span>
               </template>

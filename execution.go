@@ -214,6 +214,7 @@ func progressToExecution(p models.ProgressEvent, trigger string, canStop bool) m
 		FilesDone:        p.FilesDone,
 		FilesTotal:       p.FilesTotal,
 		FilesSkipped:     p.FilesSkipped,
+		FilesFromCache:   p.FilesFromCache,
 		CurrentPath:      p.CurrentPath,
 		Message:          p.Message,
 		CanStop:          canStop,

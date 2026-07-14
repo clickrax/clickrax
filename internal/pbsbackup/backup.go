@@ -345,9 +345,10 @@ func backupReal(ctx context.Context, client *pbscommon.PBSClient, server models.
 	}
 
 	archive := &pbscommon.PXARArchive{
-		ArchiveName:  "backup.pxar.didx",
-		FilesTotal:   &stats.FilesTotal,
-		FilesSkipped: &stats.FilesSkipped,
+		ArchiveName:        "backup.pxar.didx",
+		FilesTotal:         &stats.FilesTotal,
+		FilesSkipped:       &stats.FilesSkipped,
+		FilesFromCache:     &stats.FilesFromCache,
 		SkipUnreadableDirs: skipAccessErrors,
 		Abort: func() error {
 			select {

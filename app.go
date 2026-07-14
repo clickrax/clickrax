@@ -113,6 +113,9 @@ func mergeTerminalProgress(prev, ev models.ProgressEvent) models.ProgressEvent {
 	if ev.FilesSkipped == 0 && prev.FilesSkipped > 0 {
 		ev.FilesSkipped = prev.FilesSkipped
 	}
+	if ev.FilesFromCache == 0 && prev.FilesFromCache > 0 {
+		ev.FilesFromCache = prev.FilesFromCache
+	}
 	if ev.FilesChanged == 0 && prev.FilesChanged > 0 {
 		ev.FilesChanged = prev.FilesChanged
 	}

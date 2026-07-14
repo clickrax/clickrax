@@ -159,6 +159,9 @@ func (a *App) finishBackupRun(
 		if lp.FilesSkipped > 0 {
 			doneEv.FilesSkipped = lp.FilesSkipped
 		}
+		if lp.FilesFromCache > 0 {
+			doneEv.FilesFromCache = lp.FilesFromCache
+		}
 		if lp.FilesChanged > 0 {
 			doneEv.FilesChanged = lp.FilesChanged
 		}
